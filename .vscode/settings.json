@@ -1,0 +1,8 @@
+{
+  "[typescript]": {
+    "editor.defaultFormatter": "rome.rome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "rome.rome"
+  }
+}

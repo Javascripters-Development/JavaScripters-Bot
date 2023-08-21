@@ -1,0 +1,24 @@
+{
+	"name": "javascripters-bot",
+	"version": "0.0.1",
+	"module": "src/index.ts",
+	"type": "module",
+	"devDependencies": {
+		"bun-types": "^0.7.3",
+		"rome": "^12.1.3"
+	},
+	"author": "Jacob Jackson",
+	"license": "GPL-3.0-or-later",
+	"dependencies": {
+		"bufferutil": "^4.0.7",
+		"discord.js": "^14.13.0",
+		"djs-fsrouter": "^0.0.4",
+		"erlpack": "^0.1.4",
+		"utf-8-validate": "^6.0.3",
+		"zlib-sync": "^0.1.8"
+	},
+	"scripts": {
+		"dev": "bun ./src/index.ts --watch",
+		"prod": "NODE_ENV=production bun src/index.ts"
+	}
+}
