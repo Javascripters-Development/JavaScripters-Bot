@@ -1,7 +1,9 @@
 import { Client, Colors, EmbedBuilder, GuildMember, PartialGuildMember, userMention } from "discord.js"
 
 const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
-    const targetChannel = await member.guild.channels.fetch(process.env.GATEWAY_CHANNEL!)
+    if (!process.env.GATEWAY_CHANNEL) throw new Error('No GATEWAY_CHANNEL environment variable defined')
+
+    const targetChannel = await member.guild.channels.fetch(process.env.GATEWAY_CHANNEL)
 
     if (!targetChannel?.isTextBased()) {
         console.error('Gateway channel is not a text channel!')
