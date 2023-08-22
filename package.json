@@ -23,7 +23,7 @@
 		"dev": "bun --watch ./src/index.ts",
 		"prod": "NODE_ENV=production bun src/index.ts",
 		"format": "rome format",
-		"link": "rome check",
+		"lint": "rome check",
 		"migrate": "bun run migrate:generate && bun run migrate:execute",
 		"migrate:generate": "drizzle-kit generate:sqlite",
 		"migrate:execute": "bun scripts/migrate.ts",
