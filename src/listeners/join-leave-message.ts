@@ -43,9 +43,9 @@ const handleGuildMemberLeave = async (member: GuildMember | PartialGuildMember) 
     })
 }
 
-const listener = (client: Client) => {
+const joinLeaveMessageListener = (client: Client) => {
     client.on('guildMemberAdd', handleGuildMemberJoin)
     client.on('guildMemberRemove', handleGuildMemberLeave)
 }
 
-export default listener
+export { joinLeaveMessageListener }
