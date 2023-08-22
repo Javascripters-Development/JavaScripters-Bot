@@ -9,6 +9,7 @@ const MDN_URL = "https://developer.mozilla.org/en-US/";
 type SearchResult = {
     title: string,
     link: string,
+    snippet: string,
 };
 
 const Info: Command = {
@@ -76,11 +77,12 @@ function search(term: string, num = 5) {
     return fetch(`${BASE_URL}&q=${encodeURIComponent(term)}&num=${num}`);
 }
 
-function itemToField({title, link}: SearchResult): APIEmbedField {
+function itemToField({title, link, snippet}: SearchResult): APIEmbedField {
     return {
         name: title,
-        value: link.startsWith(MDN_URL)
+        value: `${link.startsWith(MDN_URL)
             ? `[${link.substring(MDN_URL.length)}](${link})`
-            : link,
+            : link}
+            ${snippet}`,
     };
 }
