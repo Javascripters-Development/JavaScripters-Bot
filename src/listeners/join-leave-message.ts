@@ -26,7 +26,7 @@ const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
 export default [
 	createListener({
 		event: "guildMemberAdd",
-		handler: async (member) => {
+		async handler(member) {
 			const targetChannel = await getTargetChannel(member);
 
 			if (!targetChannel) return;
@@ -45,7 +45,7 @@ export default [
 	}),
 	createListener({
 		event: "guildMemberRemove",
-		handler: async (member) => {
+		async handler(member) {
 			const targetChannel = await getTargetChannel(member);
 
 			if (!targetChannel) return;
