@@ -25,13 +25,12 @@ client.once(Events.ClientReady, async (bot) => {
 	}
 
 	// Initialize all event listeners
-	try {
-		for (const listenerName in listeners) {
-			const listener = listeners[listenerName as keyof typeof listeners]
-			listener(bot)
+	for (const listenerName in listeners) {
+		try {
+			listeners[listenerName as keyof typeof listeners](bot);
+		} catch (err) {
+			console.error(`Error loading listener "${listenerName}"!\n${err}`);
 		}
-	} catch (err) {
-		console.error(`Error loading listeners!\n${err}`);
 	}
 
 	console.log(`Bot ${bot.user.username} ready!`);
