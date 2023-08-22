@@ -9,6 +9,7 @@ const client = new Client({
 		GatewayIntentBits.GuildMembers,
 	],
 });
+
 client.once(Events.ClientReady, async (bot) => {
 	try {
 		await loadCommands(client, {
@@ -24,4 +25,5 @@ client.once(Events.ClientReady, async (bot) => {
 
 	console.log(`Bot ${bot.user.username} ready!`);
 });
+
 client.login(process.env.TOKEN);
