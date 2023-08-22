@@ -1,53 +1,65 @@
-import { Client, Colors, EmbedBuilder, GuildMember, PartialGuildMember, userMention } from "discord.js"
+import {
+	Client,
+	Colors,
+	EmbedBuilder,
+	GuildMember,
+	PartialGuildMember,
+	userMention,
+} from "discord.js";
 
 const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
-    if (!process.env.GATEWAY_CHANNEL) throw new Error('No GATEWAY_CHANNEL environment variable defined')
+	if (!process.env.GATEWAY_CHANNEL)
+		throw new Error("No GATEWAY_CHANNEL environment variable defined");
 
-    const targetChannel = await member.guild.channels.fetch(process.env.GATEWAY_CHANNEL)
+	const targetChannel = await member.guild.channels.fetch(
+		process.env.GATEWAY_CHANNEL,
+	);
 
-    if (!targetChannel?.isTextBased()) {
-        console.error('Gateway channel is not a text channel!')
-        return undefined
-    }
+	if (!targetChannel?.isTextBased()) {
+		console.error("Gateway channel is not a text channel!");
+		return undefined;
+	}
 
-    return targetChannel
-}
+	return targetChannel;
+};
 
 const handleGuildMemberJoin = async (member: GuildMember) => {
-    const targetChannel = await getTargetChannel(member)
+	const targetChannel = await getTargetChannel(member);
 
-    if (!targetChannel) return
-    
-    await targetChannel.send({
-        content: `Welcome ${userMention(member.id)}!`,
-        embeds: [
-            new EmbedBuilder({
-                color: Colors.Green,
-                title: `Welcome to ${member.guild.name}!`,
-                description: 'Enjoy your stay!'
-            })
-        ]
-    })
-}
+	if (!targetChannel) return;
 
-const handleGuildMemberLeave = async (member: GuildMember | PartialGuildMember) => {
-    const targetChannel = await getTargetChannel(member)
+	await targetChannel.send({
+		content: `Welcome ${userMention(member.id)}!`,
+		embeds: [
+			new EmbedBuilder({
+				color: Colors.Green,
+				title: `Welcome to ${member.guild.name}!`,
+				description: "Enjoy your stay!",
+			}),
+		],
+	});
+};
 
-    if (!targetChannel) return
-    
-    await targetChannel.send({
-        embeds: [
-            new EmbedBuilder({
-                color: Colors.Red,
-                title: `Goodbye ${member.user.username}!`
-            })
-        ]
-    })
-}
+const handleGuildMemberLeave = async (
+	member: GuildMember | PartialGuildMember,
+) => {
+	const targetChannel = await getTargetChannel(member);
+
+	if (!targetChannel) return;
+
+	await targetChannel.send({
+		embeds: [
+			new EmbedBuilder({
+				color: Colors.Red,
+				title: `Goodbye ${member.user.username}!`,
+			}),
+		],
+	});
+};
 
 const joinLeaveMessageListener = (client: Client) => {
-    client.on('guildMemberAdd', handleGuildMemberJoin)
-    client.on('guildMemberRemove', handleGuildMemberLeave)
-}
+	client.on("guildMemberAdd", handleGuildMemberJoin);
+	client.on("guildMemberRemove", handleGuildMemberLeave);
+};
 
-export { joinLeaveMessageListener }
+export { joinLeaveMessageListener };
