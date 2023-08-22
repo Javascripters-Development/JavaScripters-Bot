@@ -1,6 +1,6 @@
 import loadCommands from "djs-fsrouter";
 import { Client, GatewayIntentBits, Events } from "discord.js";
-import * as listeners from './listeners/index.ts'
+import * as listeners from "./listeners/index.ts";
 
 const client = new Client({
 	intents: [
