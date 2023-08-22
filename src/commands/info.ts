@@ -45,8 +45,10 @@ JavaScripters is a well known JavaScript focused server with over 10k members`,
 				},
 			],
 		};
-		await interaction.reply("See server info below!");
-		interaction.channel?.send({ embeds: [embed] });
+		interaction.reply({
+			content: "See server info below!",
+			embeds: [embed],
+		}).catch(console.error);
 	},
 	description: "Get info about the bot and server",
 	defaultMemberPermissions: "0",
