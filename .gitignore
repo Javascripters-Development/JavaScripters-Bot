@@ -5,3 +5,8 @@ bun.lockb
 
 .env.*
 .env
+
+main.db
+main.db-shm
+main.db-wal
+migrations
