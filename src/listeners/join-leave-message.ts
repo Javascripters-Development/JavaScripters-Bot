@@ -1,11 +1,11 @@
 import {
-	Client,
 	Colors,
 	EmbedBuilder,
 	GuildMember,
 	PartialGuildMember,
 	userMention,
 } from "discord.js";
+import { createListener } from "../listener.ts";
 
 const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
 	if (!process.env.GATEWAY_CHANNEL)
@@ -23,43 +23,41 @@ const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
 	return targetChannel;
 };
 
-const handleGuildMemberJoin = async (member: GuildMember) => {
-	const targetChannel = await getTargetChannel(member);
+export default [
+	createListener({
+		event: "guildMemberAdd",
+		handler: async (member) => {
+			const targetChannel = await getTargetChannel(member);
 
-	if (!targetChannel) return;
+			if (!targetChannel) return;
 
-	await targetChannel.send({
-		content: `Welcome ${userMention(member.id)}!`,
-		embeds: [
-			new EmbedBuilder({
-				color: Colors.Green,
-				title: `Welcome to ${member.guild.name}!`,
-				description: "Enjoy your stay!",
-			}),
-		],
-	});
-};
+			await targetChannel.send({
+				content: `Welcome ${userMention(member.id)}!`,
+				embeds: [
+					new EmbedBuilder({
+						color: Colors.Green,
+						title: `Welcome to ${member.guild.name}!`,
+						description: "Enjoy your stay!",
+					}),
+				],
+			});
+		},
+	}),
+	createListener({
+		event: "guildMemberRemove",
+		handler: async (member) => {
+			const targetChannel = await getTargetChannel(member);
 
-const handleGuildMemberLeave = async (
-	member: GuildMember | PartialGuildMember,
-) => {
-	const targetChannel = await getTargetChannel(member);
+			if (!targetChannel) return;
 
-	if (!targetChannel) return;
-
-	await targetChannel.send({
-		embeds: [
-			new EmbedBuilder({
-				color: Colors.Red,
-				title: `Goodbye ${member.user.username}!`,
-			}),
-		],
-	});
-};
-
-const joinLeaveMessageListener = (client: Client) => {
-	client.on("guildMemberAdd", handleGuildMemberJoin);
-	client.on("guildMemberRemove", handleGuildMemberLeave);
-};
-
-export { joinLeaveMessageListener };
+			await targetChannel.send({
+				embeds: [
+					new EmbedBuilder({
+						color: Colors.Red,
+						title: `Goodbye ${member.user.username}!`,
+					}),
+				],
+			});
+		},
+	}),
+];
