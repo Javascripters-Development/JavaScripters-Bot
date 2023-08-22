@@ -5,6 +5,7 @@
 	"type": "module",
 	"devDependencies": {
 		"bun-types": "^0.7.3",
+		"drizzle-kit": "^0.19.13",
 		"rome": "^12.1.3"
 	},
 	"author": "Jacob Jackson",
@@ -13,6 +14,7 @@
 		"bufferutil": "^4.0.7",
 		"discord.js": "^14.13.0",
 		"djs-fsrouter": "^0.0.4",
+		"drizzle-orm": "^0.28.3",
 		"erlpack": "^0.1.4",
 		"utf-8-validate": "^6.0.3",
 		"zlib-sync": "^0.1.8"
@@ -21,6 +23,10 @@
 		"dev": "bun --watch ./src/index.ts",
 		"prod": "NODE_ENV=production bun src/index.ts",
 		"format": "rome format",
-		"link": "rome check"
+		"link": "rome check",
+		"migrate": "bun run migrate:generate && bun run migrate:execute",
+		"migrate:generate": "drizzle-kit generate:sqlite",
+		"migrate:execute": "bun scripts/migrate.ts",
+		"migrate:clean": "drizzle-kit drop"
 	}
 }

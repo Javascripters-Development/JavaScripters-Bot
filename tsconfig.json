@@ -10,7 +10,8 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "moduleDetection": "force",
-    "moduleResolution": "nodenext",
+    // drizzle orm errors with nodenext
+    "moduleResolution": "Bundler",
     "esModuleInterop": true,
 
     "strict": true,
