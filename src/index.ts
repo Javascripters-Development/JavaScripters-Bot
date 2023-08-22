@@ -1,6 +1,9 @@
 import loadCommands from "djs-fsrouter";
 import { Client, GatewayIntentBits, Events } from "discord.js";
-import * as listeners from "./listeners/index.ts";
+import { join } from "path";
+import { readdir } from "fs/promises";
+import { castArray } from "./utils.ts";
+import { Listener } from "./listener.ts";
 
 const client = new Client({
 	intents: [
@@ -25,11 +28,20 @@ client.once(Events.ClientReady, async (bot) => {
 	}
 
 	// Initialize all event listeners
-	for (const listenerName in listeners) {
+	const listenerDirectory = join(process.cwd(), "src/listeners");
+	const listenerFilenames = await readdir(listenerDirectory);
+	for (const listenerFilename of listenerFilenames) {
+		const listenerPath = join(listenerDirectory, listenerFilename);
 		try {
-			listeners[listenerName as keyof typeof listeners](bot);
+			const { default: listeners } = (await import(listenerPath)) as {
+				default: Listener[];
+			};
+
+			for (const listener of castArray(listeners)) {
+				client[listener.type](listener.event, listener.handler);
+			}
 		} catch (err) {
-			console.error(`Error loading listener "${listenerName}"!\n${err}`);
+			console.error(`Error loading listener ${listenerPath}!\n${err}`);
 		}
 	}
 
