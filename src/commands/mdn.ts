@@ -80,7 +80,7 @@ const BASE_URL =
 
 const CAN_QUERY = !!BASE_URL;
 
-function search(term: string, num = 5) {
+function search(term: string, num = 10) {
 	if (!CAN_QUERY)
 		throw new Error("Cannot query Google CSE, key or CSX missing.");
 	if (!Number.isInteger(num) || num < 1 || num > 10)
