@@ -97,36 +97,37 @@ function itemToChoice({ title, link }: SearchResult) {
 }
 
 client.on("interactionCreate", async (interaction) => {
-	if (interaction.isStringSelectMenu() && interaction.customId === MDN_SELECT) {
-		const [url] = interaction.values;
-		const crawler = await scrape(url);
-		const intro = crawler(
-			".main-page-content > .section-content:first-of-type p",
+	if (!interaction.isStringSelectMenu() || interaction.customId !== MDN_SELECT)
+		return;
+
+	const [url] = interaction.values;
+	const crawler = await scrape(url);
+	const intro = crawler(
+		".main-page-content > .section-content:first-of-type p",
+	);
+	let title: string = crawler("head title").text();
+	if (title.endsWith(" | MDN")) title = title.slice(0, -6);
+	const paragraphs: string[] = [];
+	let totalLength = 0;
+	for (const introParagraph of intro) {
+		makeLinksAbsolute(introParagraph);
+		const text = htmlToMarkdown(
+			crawler(introParagraph).prop("innerHTML") || "",
 		);
-		let title: string = crawler("head title").text();
-		if (title.endsWith(" | MDN")) title = title.slice(0, -6);
-		const paragraphs: string[] = [];
-		let totalLength = 0;
-		for (const introParagraph of intro) {
-			makeLinksAbsolute(introParagraph);
-			const text = htmlToMarkdown(
-				crawler(introParagraph).prop("innerHTML") || "",
-			);
-			totalLength += text.length;
-			if (totalLength < 2048) paragraphs.push(text);
-			else break;
-		}
-		interaction
-			.reply({
-				embeds: [
-					{
-						author: { name: title, url },
-						description: paragraphs.join("\n"),
-					},
-				],
-			})
-			.catch(console.error);
+		totalLength += text.length;
+		if (totalLength < 2048) paragraphs.push(text);
+		else break;
 	}
+	interaction
+		.reply({
+			embeds: [
+				{
+					author: { name: title, url },
+					description: paragraphs.join("\n"),
+				},
+			],
+		})
+		.catch(console.error);
 });
 
 function* test() {
