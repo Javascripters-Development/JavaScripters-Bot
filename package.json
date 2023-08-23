@@ -15,6 +15,7 @@
     "discord.js": "^14.13.0",
     "djs-fsrouter": "^0.0.4",
     "erlpack": "^0.1.4",
+    "html-entities-decode": "^1.0.2",
     "utf-8-validate": "^6.0.3",
     "zlib-sync": "^0.1.8"
   },

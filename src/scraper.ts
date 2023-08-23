@@ -1,4 +1,5 @@
 import { load, type CheerioAPI } from "cheerio";
+import decodeEntities from "html-entities-decode";
 
 export type CheerioNode = {
 	name: string;
@@ -31,4 +32,25 @@ export default async function scrape(url: string, skipCache = false) {
 	cache.set(url, crawler);
 	setTimeout(cache.delete.bind(cache, url), CACHE_DURATION);
 	return crawler;
+}
+
+export function htmlToMarkdown(contents: string, limit = 2000) {
+	const markdown = decodeEntities(
+		contents
+			.replaceAll("\n", "")
+			.replaceAll(/<a .*?href="([^"]+)".*?>(.+?)<\/a>/g, "[$2]($1)")
+			.replaceAll("<hr>", "\n——————————\n")
+			.replaceAll(/<\/?(strong|b)>/g, "**")
+			.replaceAll(/<\/?(em|i)>/g, "*")
+			.replaceAll(/<\/?u>/g, "__")
+			.replaceAll(/<\/?(del|s)>/g, "~~")
+			.replaceAll(/<\/?(code|kbd)>/g, "`")
+			.replaceAll("<li>", "\n- ")
+			.replaceAll("</li>", "")
+			.replaceAll(/<\/?[ou]l>/g, ""),
+	);
+
+	return markdown.length < limit
+		? markdown
+		: `${markdown.substring(0, limit - 1)}…`;
 }
