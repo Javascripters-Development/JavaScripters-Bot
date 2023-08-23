@@ -10,11 +10,15 @@ import { Config } from "../schemas/config.ts";
 import db from "../db.ts";
 
 const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
-	if (!process.env.GATEWAY_CHANNEL)
-		throw new Error("No GATEWAY_CHANNEL environment variable defined");
+	const [firstRow] = await db
+		.select({ gatewayChannel: Config.gatewayChannel })
+		.from(Config)
+		.limit(1);
+
+	if (!firstRow.gatewayChannel) return undefined;
 
 	const targetChannel = await member.guild.channels.fetch(
-		process.env.GATEWAY_CHANNEL,
+		firstRow.gatewayChannel,
 	);
 
 	if (!targetChannel?.isTextBased()) {
