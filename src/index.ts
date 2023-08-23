@@ -1,5 +1,11 @@
 import loadCommands from "djs-fsrouter";
-import { Client, GatewayIntentBits, Events } from "discord.js";
+import {
+	Client,
+	GatewayIntentBits,
+	Events,
+	ClientEvents,
+	Awaitable,
+} from "discord.js";
 import { join } from "path";
 import { readdir } from "fs/promises";
 import { castArray } from "./utils.ts";
@@ -38,7 +44,10 @@ client.once(Events.ClientReady, async (bot) => {
 			};
 
 			for (const listener of castArray(listeners)) {
-				client[listener.type](listener.event, listener.handler);
+				client[listener.type ?? "on"](
+					listener.event as keyof ClientEvents,
+					listener.handler as (...args: unknown[]) => Awaitable<void>,
+				);
 			}
 		} catch (err) {
 			console.error(`Error loading listener ${listenerPath}!\n${err}`);
