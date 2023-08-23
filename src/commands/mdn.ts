@@ -48,6 +48,10 @@ const Info: Command = {
 				ephemeral: true,
 				content: "The search failed, please try again.",
 			};
+			if (searchResult)
+				console.error(
+					`Got ${searchResult.status} ${searchResult.statusText} code trying to use CSE`,
+				);
 		} else {
 			const { items }: { items: SearchResult[] } = await searchResult.json();
 			if (!items.length) {
