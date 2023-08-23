@@ -5,7 +5,7 @@ import {
 	PartialGuildMember,
 	userMention,
 } from "discord.js";
-import { Listener } from "../listener.ts";
+import { Listener } from "../types/listener.ts";
 import { Config } from "../schemas/config.ts";
 import db from "../db.ts";
 import { eq } from "drizzle-orm";
