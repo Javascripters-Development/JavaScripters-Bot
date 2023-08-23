@@ -11,12 +11,15 @@ import db from "../db.ts";
 import { eq } from "drizzle-orm";
 
 const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
-	const [firstRow] = await db
-		.select({ gatewayChannel: Config.gatewayChannel })
+	const firstRow = await db
+		.select({
+			gatewayChannel: Config.gatewayChannel,
+		})
 		.from(Config)
-		.limit(1);
+		.where(eq(Config.id, member.guild.id))
+		.get();
 
-	if (!firstRow.gatewayChannel) return undefined;
+	if (!firstRow?.gatewayChannel) return undefined;
 
 	const targetChannel = await member.guild.channels.fetch(
 		firstRow.gatewayChannel,
@@ -31,7 +34,7 @@ const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
 };
 
 const getEmbed = async (guildId: string, isLeaveEmbed?: boolean) => {
-	const [{ title, description }] =
+	const { title, description } =
 		(await db
 			.select({
 				title: isLeaveEmbed
@@ -43,7 +46,7 @@ const getEmbed = async (guildId: string, isLeaveEmbed?: boolean) => {
 			})
 			.from(Config)
 			.where(eq(Config.id, guildId))
-			.limit(1)) ?? {};
+			.get()) ?? {};
 
 	return new EmbedBuilder({
 		color: isLeaveEmbed ? Colors.Red : Colors.Green,
@@ -62,7 +65,7 @@ export default [
 
 			await targetChannel.send({
 				content: `Welcome ${userMention(member.id)}!`,
-				embeds: [await getEmbed(member.guild.id],
+				embeds: [await getEmbed(member.guild.id)],
 			});
 		},
 	},
