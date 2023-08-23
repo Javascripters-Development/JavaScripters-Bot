@@ -1,10 +1,14 @@
 import {
 	type InteractionReplyOptions,
-	type APIEmbedField,
+	InteractionType,
 	ApplicationCommandOptionType,
 } from "discord.js";
 import type { Command } from "djs-fsrouter";
 
+import { client } from "../index.ts";
+import { stringSelectMenu } from "../components.ts";
+
+const MDN_SELECT = "mdn_select";
 const MDN_URL = "https://developer.mozilla.org/en-US/";
 type SearchResult = {
 	title: string;
@@ -43,7 +47,7 @@ const Info: Command = {
 				content: "The search failed, please try again.",
 			};
 		} else {
-			const { items } = await searchResult.json();
+			const { items }: { items: SearchResult[] } = await searchResult.json();
 			if (!items.length) {
 				reply = {
 					ephemeral: true,
@@ -51,12 +55,18 @@ const Info: Command = {
 				};
 			} else {
 				reply = {
+					ephemeral: true,
 					embeds: [
 						{
 							description: `Results for "${searchTerm}"`,
 							url: MDN_URL,
-							fields: items.map(itemToField),
 						},
+					],
+					components: [
+						stringSelectMenu(
+							MDN_SELECT,
+							items.map(({ title, link }) => ({ label: title, value: link })),
+						),
 					],
 				};
 			}
@@ -84,14 +94,18 @@ function search(term: string, num = 5) {
 	return fetch(`${BASE_URL}&q=${encodeURIComponent(term)}&num=${num}`);
 }
 
-function itemToField({ title, link, snippet }: SearchResult): APIEmbedField {
-	return {
-		name: title,
-		value: `${
-			link.startsWith(MDN_URL)
-				? `[${link.substring(MDN_URL.length)}](${link})`
-				: link
-		}
-            ${snippet}`,
-	};
-}
+client.on("interactionCreate", (interaction) => {
+	if (interaction.isStringSelectMenu() && interaction.customId === MDN_SELECT) {
+		const [choice] = interaction.values;
+		interaction
+			.reply({
+				embeds: [
+					{
+						title: choice.substring(choice.lastIndexOf("/") + 1),
+						description: `[Open in browser](${choice})`,
+					},
+				],
+			})
+			.catch(console.error);
+	}
+});
