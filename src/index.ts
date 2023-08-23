@@ -9,7 +9,7 @@ import {
 import { join } from "path";
 import { readdir } from "fs/promises";
 import { castArray } from "./utils.ts";
-import { Listener } from "./listener.ts";
+import { Listener } from "./types/listener.ts";
 
 const client = new Client({
 	intents: [
