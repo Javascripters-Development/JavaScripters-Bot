@@ -130,11 +130,6 @@ client.on("interactionCreate", async (interaction) => {
 		.catch(console.error);
 });
 
-function* test() {
-	yield 1;
-	return 2;
-}
-
 function makeLinksAbsolute(p: Element) {
 	for (const elm of p.children) {
 		if (elm.type !== "tag" || elm.name !== "a") continue;
