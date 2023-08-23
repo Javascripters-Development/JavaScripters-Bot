@@ -5,7 +5,7 @@ import {
 	PartialGuildMember,
 	userMention,
 } from "discord.js";
-import { createListener } from "../listener.ts";
+import { Listener } from "../listener.ts";
 
 const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
 	if (!process.env.GATEWAY_CHANNEL)
@@ -24,7 +24,7 @@ const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
 };
 
 export default [
-	createListener({
+	{
 		event: "guildMemberAdd",
 		async handler(member) {
 			const targetChannel = await getTargetChannel(member);
@@ -42,8 +42,8 @@ export default [
 				],
 			});
 		},
-	}),
-	createListener({
+	},
+	{
 		event: "guildMemberRemove",
 		async handler(member) {
 			const targetChannel = await getTargetChannel(member);
@@ -59,5 +59,5 @@ export default [
 				],
 			});
 		},
-	}),
-];
+	},
+] as Listener[];
