@@ -6,6 +6,8 @@ import {
 	userMention,
 } from "discord.js";
 import { Listener } from "../listener.ts";
+import { Config } from "../schemas/config.ts";
+import db from "../db.ts";
 
 const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
 	if (!process.env.GATEWAY_CHANNEL)
@@ -23,6 +25,24 @@ const getTargetChannel = async (member: GuildMember | PartialGuildMember) => {
 	return targetChannel;
 };
 
+const getEmbed = async (isLeaveEmbed?: boolean) => {
+	const [firstRow] = await db
+		.select({
+			title: isLeaveEmbed ? Config.gatewayLeaveTitle : Config.gatewayJoinTitle,
+			description: isLeaveEmbed
+				? Config.gatewayLeaveContent
+				: Config.gatewayJoinContent,
+		})
+		.from(Config)
+		.limit(1);
+
+	return new EmbedBuilder({
+		color: isLeaveEmbed ? Colors.Red : Colors.Green,
+		title: firstRow.title ?? undefined,
+		description: firstRow.description ?? undefined,
+	});
+};
+
 export default [
 	{
 		event: "guildMemberAdd",
@@ -33,13 +53,7 @@ export default [
 
 			await targetChannel.send({
 				content: `Welcome ${userMention(member.id)}!`,
-				embeds: [
-					new EmbedBuilder({
-						color: Colors.Green,
-						title: `Welcome to ${member.guild.name}!`,
-						description: "Enjoy your stay!",
-					}),
-				],
+				embeds: [await getEmbed()],
 			});
 		},
 	},
@@ -51,12 +65,7 @@ export default [
 			if (!targetChannel) return;
 
 			await targetChannel.send({
-				embeds: [
-					new EmbedBuilder({
-						color: Colors.Red,
-						title: `Goodbye ${member.user.username}!`,
-					}),
-				],
+				embeds: [await getEmbed(true)],
 			});
 		},
 	},
