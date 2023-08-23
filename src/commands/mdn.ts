@@ -62,12 +62,7 @@ const Info: Command = {
 			} else {
 				reply = {
 					ephemeral: true,
-					embeds: [
-						{
-							description: `Results for "${searchTerm}"`,
-							url: MDN_URL,
-						},
-					],
+					embeds: [{ title: `Results for "${searchTerm}"` }],
 					components: [stringSelectMenu(MDN_SELECT, items.map(itemToChoice))],
 				};
 			}
@@ -128,6 +123,10 @@ client.on("interactionCreate", async (interaction) => {
 				{
 					author: { name: title, url },
 					description: paragraphs.join("\n"),
+					footer: {
+						text: `Requested by ${interaction.user.username}`,
+						icon_url: interaction.user.avatarURL() || undefined,
+					},
 				},
 			],
 		})
