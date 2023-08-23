@@ -62,12 +62,7 @@ const Info: Command = {
 							url: MDN_URL,
 						},
 					],
-					components: [
-						stringSelectMenu(
-							MDN_SELECT,
-							items.map(({ title, link }) => ({ label: title, value: link })),
-						),
-					],
+					components: [stringSelectMenu(MDN_SELECT, items.map(itemToChoice))],
 				};
 			}
 		}
@@ -92,6 +87,11 @@ function search(term: string, num = 5) {
 		);
 
 	return fetch(`${BASE_URL}&q=${encodeURIComponent(term)}&num=${num}`);
+}
+
+function itemToChoice({ title, link }: SearchResult) {
+	if (title.endsWith(" | MDN")) title = title.slice(0, -6);
+	return { label: title, value: link };
 }
 
 client.on("interactionCreate", (interaction) => {
