@@ -7,6 +7,8 @@ import type { Command } from "djs-fsrouter";
 
 import { client } from "../index.ts";
 import { stringSelectMenu } from "../components.ts";
+import scrape, { htmlToMarkdown } from "../scraper.ts";
+import type { Element } from "cheerio";
 
 const MDN_SELECT = "mdn_select";
 const MDN_URL = "https://developer.mozilla.org/en-US/";
@@ -94,18 +96,50 @@ function itemToChoice({ title, link }: SearchResult) {
 	return { label: title, value: link };
 }
 
-client.on("interactionCreate", (interaction) => {
+client.on("interactionCreate", async (interaction) => {
 	if (interaction.isStringSelectMenu() && interaction.customId === MDN_SELECT) {
-		const [choice] = interaction.values;
+		const [url] = interaction.values;
+		const crawler = await scrape(url);
+		const intro = crawler(
+			".main-page-content > .section-content:first-of-type p",
+		);
+		let title: string = crawler("head title").text();
+		if (title.endsWith(" | MDN")) title = title.slice(0, -6);
+		const paragraphs: string[] = [];
+		let totalLength = 0;
+		for (const introParagraph of intro) {
+			makeLinksAbsolute(introParagraph);
+			const text = htmlToMarkdown(
+				crawler(introParagraph).prop("innerHTML") || "",
+			);
+			totalLength += text.length;
+			if (totalLength < 2048) paragraphs.push(text);
+			else break;
+		}
 		interaction
 			.reply({
 				embeds: [
 					{
-						title: choice.substring(choice.lastIndexOf("/") + 1),
-						description: `[Open in browser](${choice})`,
+						author: { name: title, url },
+						description: paragraphs.join("\n"),
 					},
 				],
 			})
 			.catch(console.error);
 	}
 });
+
+function* test() {
+	yield 1;
+	return 2;
+}
+
+function makeLinksAbsolute(p: Element) {
+	for (const elm of p.children) {
+		if (elm.type !== "tag" || elm.name !== "a") continue;
+		const { href }: { href?: string } = elm.attribs;
+		if (href?.startsWith("/")) {
+			elm.attribs.href = `https://developer.mozilla.org${href}`;
+		}
+	}
+}
