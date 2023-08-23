@@ -2,10 +2,10 @@ import {
 	Colors,
 	EmbedBuilder,
 	GuildMember,
-	PartialGuildMember,
+	type PartialGuildMember,
 	userMention,
 } from "discord.js";
-import { Listener } from "../types/listener.ts";
+import type { Listener } from "../types/listener.ts";
 import { Config } from "../schemas/config.ts";
 import db from "../db.ts";
 import { eq } from "drizzle-orm";

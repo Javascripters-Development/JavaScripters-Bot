@@ -3,13 +3,13 @@ import {
 	Client,
 	GatewayIntentBits,
 	Events,
-	ClientEvents,
-	Awaitable,
+	type ClientEvents,
+	type Awaitable,
 } from "discord.js";
 import { join } from "path";
 import { readdir } from "fs/promises";
 import { castArray } from "./utils.ts";
-import { Listener } from "./types/listener.ts";
+import type { Listener } from "./types/listener.ts";
 
 const client = new Client({
 	intents: [
