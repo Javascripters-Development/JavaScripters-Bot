@@ -47,7 +47,8 @@ export function htmlToMarkdown(contents: string, limit = 2000) {
 			.replaceAll(/<\/?(code|kbd)>/g, "`")
 			.replaceAll("<li>", "\n- ")
 			.replaceAll("</li>", "")
-			.replaceAll(/<\/?[ou]l>/g, ""),
+			.replaceAll(/<\/?[ou]l>/g, "")
+			.trim(),
 	);
 
 	return markdown.length < limit
