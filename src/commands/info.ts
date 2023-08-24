@@ -8,6 +8,8 @@ import type { Command } from "djs-fsrouter";
 
 export const type = ApplicationCommandType.ChatInput;
 const Info: Command = {
+	description: "Get info about the bot and server",
+	defaultMemberPermissions: "0",
 	async run(interaction) {
 		if (!interaction.guild) {
 			interaction.reply({
@@ -45,10 +47,12 @@ JavaScripters is a well known JavaScript focused server with over 10k members`,
 				},
 			],
 		};
-		await interaction.reply("See server info below!");
-		interaction.channel?.send({ embeds: [embed] });
+		interaction
+			.reply({
+				content: "See server info below!",
+				embeds: [embed],
+			})
+			.catch(console.error);
 	},
-	description: "Get info about the bot and server",
-	defaultMemberPermissions: "0",
 };
 export default Info;

@@ -10,11 +10,14 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "moduleDetection": "force",
-    "moduleResolution": "nodenext",
+    // drizzle orm errors with nodenext
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
 
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+
+    "verbatimModuleSyntax": true
   }
 }

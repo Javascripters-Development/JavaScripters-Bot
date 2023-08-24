@@ -4,4 +4,10 @@ node_modules
 bun.lockb
 
 .env.*
+!.env.example
 .env
+
+main.db
+main.db-shm
+main.db-wal
+migrations
