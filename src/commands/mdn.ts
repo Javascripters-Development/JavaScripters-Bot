@@ -81,10 +81,6 @@ const Info: Command = {
 					{
 						author: { name: title, url },
 						description: paragraphs.join("\n"),
-						footer: {
-							text: `Requested by ${interaction.user.username}`,
-							icon_url: interaction.user.avatarURL() || undefined,
-						},
 					},
 				],
 			})
