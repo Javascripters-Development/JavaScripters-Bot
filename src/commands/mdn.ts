@@ -1,12 +1,6 @@
-import {
-	type InteractionReplyOptions,
-	InteractionType,
-	ApplicationCommandOptionType,
-} from "discord.js";
+import { ApplicationCommandOptionType } from "discord.js";
 import type { Command } from "djs-fsrouter";
 
-import { client } from "../index.ts";
-import { stringSelectMenu } from "../components.ts";
 import scrape, { htmlToMarkdown } from "../scraper.ts";
 import type { Element } from "cheerio";
 
@@ -26,8 +20,29 @@ const Info: Command = {
 			required: true,
 			type: ApplicationCommandOptionType.String,
 			description: "Your seach terms",
+			autocomplete: true,
 		},
 	],
+
+	autocomplete: async (interaction) => {
+		const searchTerm = interaction.options.getFocused();
+		if (!searchTerm) {
+			interaction.respond([]).catch(console.error);
+			return;
+		}
+		const searchResult = await search(searchTerm).catch(console.error);
+		if (!searchResult?.ok) {
+			interaction.respond([]).catch(console.error);
+			if (searchResult)
+				console.error(
+					`Got ${searchResult.status} ${searchResult.statusText} code trying to use CSE`,
+				);
+		} else {
+			const { items }: { items: SearchResult[] } = await searchResult.json();
+			interaction.respond(items.map(itemToChoice)).catch(console.error);
+		}
+	},
+
 	async run(interaction) {
 		if (!CAN_QUERY) {
 			interaction
@@ -39,35 +54,38 @@ const Info: Command = {
 			return;
 		}
 
-		const searchTerm = interaction.options.getString("query", true);
-		const searchResult = await search(searchTerm).catch(console.error);
-		let reply: InteractionReplyOptions;
-
-		if (!searchResult?.ok) {
-			reply = {
-				ephemeral: true,
-				content: "The search failed, please try again.",
-			};
-			if (searchResult)
-				console.error(
-					`Got ${searchResult.status} ${searchResult.statusText} code trying to use CSE`,
-				);
-		} else {
-			const { items }: { items: SearchResult[] } = await searchResult.json();
-			if (!items.length) {
-				reply = {
-					ephemeral: true,
-					content: "Your search yielded no results.",
-				};
-			} else {
-				reply = {
-					ephemeral: true,
-					embeds: [{ title: `Results for "${searchTerm}"` }],
-					components: [stringSelectMenu(MDN_SELECT, items.map(itemToChoice))],
-				};
-			}
+		const url = interaction.options.getString("query", true);
+		const crawler = await scrape(url);
+		const intro = crawler(
+			".main-page-content > .section-content:first-of-type p",
+		);
+		let title: string = crawler("head title").text();
+		if (title.endsWith(" | MDN")) title = title.slice(0, -6);
+		const paragraphs: string[] = [];
+		let totalLength = 0;
+		for (const introParagraph of intro) {
+			makeLinksAbsolute(introParagraph);
+			const text = htmlToMarkdown(
+				crawler(introParagraph).prop("innerHTML") || "",
+			);
+			totalLength += text.length;
+			if (totalLength < 2048) paragraphs.push(text);
+			else break;
 		}
-		interaction.reply(reply).catch(console.error);
+		interaction
+			.reply({
+				embeds: [
+					{
+						author: { name: title, url },
+						description: paragraphs.join("\n"),
+						footer: {
+							text: `Requested by ${interaction.user.username}`,
+							icon_url: interaction.user.avatarURL() || undefined,
+						},
+					},
+				],
+			})
+			.catch(console.error);
 	},
 };
 export default Info;
@@ -92,46 +110,8 @@ function search(term: string, num = 10) {
 
 function itemToChoice({ title, link }: SearchResult) {
 	if (title.endsWith(" | MDN")) title = title.slice(0, -6);
-	return { label: title, value: link };
+	return { name: title, value: link };
 }
-
-client.on("interactionCreate", async (interaction) => {
-	if (!interaction.isStringSelectMenu() || interaction.customId !== MDN_SELECT)
-		return;
-
-	const [url] = interaction.values;
-	const crawler = await scrape(url);
-	const intro = crawler(
-		".main-page-content > .section-content:first-of-type p",
-	);
-	let title: string = crawler("head title").text();
-	if (title.endsWith(" | MDN")) title = title.slice(0, -6);
-	const paragraphs: string[] = [];
-	let totalLength = 0;
-	for (const introParagraph of intro) {
-		makeLinksAbsolute(introParagraph);
-		const text = htmlToMarkdown(
-			crawler(introParagraph).prop("innerHTML") || "",
-		);
-		totalLength += text.length;
-		if (totalLength < 2048) paragraphs.push(text);
-		else break;
-	}
-	interaction
-		.reply({
-			embeds: [
-				{
-					author: { name: title, url },
-					description: paragraphs.join("\n"),
-					footer: {
-						text: `Requested by ${interaction.user.username}`,
-						icon_url: interaction.user.avatarURL() || undefined,
-					},
-				},
-			],
-		})
-		.catch(console.error);
-});
 
 function makeLinksAbsolute(p: Element) {
 	for (const elm of p.children) {
