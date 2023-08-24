@@ -11,7 +11,7 @@
     "allowImportingTsExtensions": true,
     "moduleDetection": "force",
     // drizzle orm errors with nodenext
-    "moduleResolution": "Bundler",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
 
     "strict": true,
