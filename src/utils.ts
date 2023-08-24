@@ -1,5 +1,5 @@
 import db from "./db.ts";
-import { Config } from "./schemas/config";
+import { Config } from "./schemas/config.ts";
 import { sql, eq } from "drizzle-orm";
 /**
  * Casts a value into an array.
