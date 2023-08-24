@@ -57,17 +57,22 @@ const Info: Command = {
 		const url = interaction.options.getString("query", true);
 		const crawler = await scrape(url);
 		const intro = crawler(
-			".main-page-content > .section-content:first-of-type p",
+			".main-page-content > .section-content:first-of-type > *",
 		);
+		const links = crawler(
+			".main-page-content > .section-content:first-of-type a",
+		);
+		Array.prototype.forEach.call(links, makeLinkAbsolute);
 		let title: string = crawler("head title").text();
 		if (title.endsWith(" | MDN")) title = title.slice(0, -6);
+
 		const paragraphs: string[] = [];
 		let totalLength = 0;
 		for (const introParagraph of intro) {
-			makeLinksAbsolute(introParagraph);
 			const text = htmlToMarkdown(
 				crawler(introParagraph).prop("innerHTML") || "",
 			);
+			if (totalLength) console.log(text);
 			totalLength += text.length;
 			if (totalLength < 2048) paragraphs.push(text);
 			else break;
@@ -113,12 +118,9 @@ function itemToChoice({ title, link }: SearchResult) {
 	return { name: title, value: link };
 }
 
-function makeLinksAbsolute(p: Element) {
-	for (const elm of p.children) {
-		if (elm.type !== "tag" || elm.name !== "a") continue;
-		const { href }: { href?: string } = elm.attribs;
-		if (href?.startsWith("/")) {
-			elm.attribs.href = `https://developer.mozilla.org${href}`;
-		}
+function makeLinkAbsolute(a: Element) {
+	const { href }: { href?: string } = a.attribs;
+	if (href?.startsWith("/")) {
+		a.attribs.href = `https://developer.mozilla.org${href}`;
 	}
 }
