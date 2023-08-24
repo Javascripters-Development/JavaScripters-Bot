@@ -53,7 +53,18 @@ const Info: Command = {
 			return;
 		}
 
-		const url = MDN_URL + interaction.options.getString("query", true);
+		const query = interaction.options.getString("query", true);
+		let url: string;
+		if (query.startsWith("docs/")) url = MDN_URL + query;
+		else {
+			const defer = interaction.deferReply();
+			const {
+				items: [quickSearch],
+			} = await search(query, 1).then((r) => r.json());
+			url = quickSearch.link;
+			await defer;
+		}
+
 		const crawler = await scrape(url);
 		const intro = crawler(
 			".main-page-content > .section-content:first-of-type > *",
@@ -75,16 +86,15 @@ const Info: Command = {
 			if (totalLength < 2048) paragraphs.push(fixCodeLinks(text));
 			else break;
 		}
-		interaction
-			.reply({
-				embeds: [
-					{
-						author: { name: title, url },
-						description: paragraphs.join("\n"),
-					},
-				],
-			})
-			.catch(console.error);
+
+		interaction[interaction.deferred ? "editReply" : "reply"]({
+			embeds: [
+				{
+					author: { name: title, url },
+					description: paragraphs.join("\n"),
+				},
+			],
+		}).catch(console.error);
 	},
 };
 export default Info;
