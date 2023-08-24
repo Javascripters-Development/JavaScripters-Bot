@@ -15,18 +15,10 @@ export const castArray = <T>(value: T): T extends any[] ? T : T[] => {
 	return (Array.isArray(value) ? value : [value]) as T extends any[] ? T : T[];
 };
 
-/**
- * Returns the config for a certain guild.
- *
- * @example
- * getConfig('1')
- */
-export const getConfig = (guildId: string) =>
-	db
-		.select()
-		.from(Config)
-		.where(eq(Config.id, sql.placeholder("guildId")))
-		.prepare()
-		.get({ guildId });
+export const configPreparedStatement = db
+	.select()
+	.from(Config)
+	.where(eq(Config.id, sql.placeholder("guildId")))
+	.prepare();
 
-export type ConfigRow = ReturnType<typeof getConfig>;
+export type ConfigRow = ReturnType<typeof configPreparedStatement["get"]>;
