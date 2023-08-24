@@ -72,7 +72,7 @@ const Info: Command = {
 				crawler(introParagraph).prop("innerHTML") || "",
 			);
 			totalLength += text.length;
-			if (totalLength < 2048) paragraphs.push(text);
+			if (totalLength < 2048) paragraphs.push(fixCodeLinks(text));
 			else break;
 		}
 		interaction
@@ -121,4 +121,8 @@ function makeLinkAbsolute(a: Element) {
 	if (href?.startsWith("/")) {
 		a.attribs.href = `https://developer.mozilla.org${href}`;
 	}
+}
+
+function fixCodeLinks(text: string) {
+	return text.replaceAll(/`\[([^\]]+)\]\(([^)]+)\)`/g, "[`$1`]($2)");
 }
