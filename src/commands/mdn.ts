@@ -54,7 +54,7 @@ const Info: Command = {
 			return;
 		}
 
-		const url = interaction.options.getString("query", true);
+		const url = MDN_URL + interaction.options.getString("query", true);
 		const crawler = await scrape(url);
 		const intro = crawler(
 			".main-page-content > .section-content:first-of-type > *",
@@ -72,7 +72,6 @@ const Info: Command = {
 			const text = htmlToMarkdown(
 				crawler(introParagraph).prop("innerHTML") || "",
 			);
-			if (totalLength) console.log(text);
 			totalLength += text.length;
 			if (totalLength < 2048) paragraphs.push(text);
 			else break;
@@ -115,7 +114,7 @@ function search(term: string, num = 10) {
 
 function itemToChoice({ title, link }: SearchResult) {
 	if (title.endsWith(" | MDN")) title = title.slice(0, -6);
-	return { name: title, value: link };
+	return { name: title, value: link.substring(MDN_URL.length) };
 }
 
 function makeLinkAbsolute(a: Element) {
