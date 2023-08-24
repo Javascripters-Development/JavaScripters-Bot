@@ -4,7 +4,6 @@ import type { Command } from "djs-fsrouter";
 import scrape, { htmlToMarkdown } from "../scraper.ts";
 import type { Element } from "cheerio";
 
-const MDN_SELECT = "mdn_select";
 const MDN_URL = "https://developer.mozilla.org/en-US/";
 type SearchResult = {
 	title: string;
