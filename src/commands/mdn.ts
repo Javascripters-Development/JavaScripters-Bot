@@ -123,6 +123,14 @@ function makeLinkAbsolute(a: Element) {
 	}
 }
 
+/**
+ * Discord will not parse links surrounded with backticks.
+ * So when we get something like <code><a href="...">Cool link</a></code>
+ * That produces `[Cool link](...)`
+ * We change it into [`Cool link`](...)
+ * @param {string} text The Markdown containing offending elements
+ * @returns {string} The text with fixed links
+ */
 function fixCodeLinks(text: string) {
 	return text.replaceAll(/`\[([^\]]+)\]\(([^)]+)\)`/g, "[`$1`]($2)");
 }
