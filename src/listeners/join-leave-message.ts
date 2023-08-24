@@ -6,10 +6,10 @@ import {
 	userMention,
 } from "discord.js";
 import type { Listener } from "../types/listener.ts";
-import { configPreparedStatement, type ConfigRow } from "../utils.ts";
-
+import { getConfig } from "../utils.ts";
+import type { ConfigSelect } from "../schemas/config.ts";
 const getTargetChannel = async (
-	dbConfig: ConfigRow,
+	dbConfig: ConfigSelect,
 	member: GuildMember | PartialGuildMember,
 ) => {
 	if (!dbConfig?.gatewayChannel) return undefined;
@@ -26,7 +26,7 @@ const getTargetChannel = async (
 	return targetChannel;
 };
 
-const getEmbed = async (dbConfig: ConfigRow, isLeaveEmbed?: boolean) => {
+const getEmbed = async (dbConfig: ConfigSelect, isLeaveEmbed?: boolean) => {
 	const title = isLeaveEmbed
 		? dbConfig?.gatewayLeaveTitle
 		: dbConfig?.gatewayJoinTitle;
@@ -45,13 +45,15 @@ export default [
 	{
 		event: "guildMemberAdd",
 		async handler(member) {
-			const dbConfig = configPreparedStatement.get({
+			const [dbConfig] = getConfig.all({
 				guildId: member.guild.id,
 			});
+			if (!dbConfig) {
+				return;
+			}
+
 			const targetChannel = await getTargetChannel(dbConfig, member);
-
 			if (!targetChannel) return;
-
 			await targetChannel.send({
 				content: `Welcome ${userMention(member.id)}!`,
 				embeds: [await getEmbed(dbConfig)],
@@ -61,9 +63,12 @@ export default [
 	{
 		event: "guildMemberRemove",
 		async handler(member) {
-			const dbConfig = configPreparedStatement.get({
+			const [dbConfig] = getConfig.all({
 				guildId: member.guild.id,
 			});
+			if (!dbConfig) {
+				return;
+			}
 			const targetChannel = await getTargetChannel(dbConfig, member);
 
 			if (!targetChannel) return;

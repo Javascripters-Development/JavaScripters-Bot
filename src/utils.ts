@@ -1,7 +1,6 @@
-import { sql, eq } from "drizzle-orm";
-import db from "./db";
+import db from "./db.ts";
 import { Config } from "./schemas/config";
-
+import { sql, eq } from "drizzle-orm";
 /**
  * Casts a value into an array.
  *
@@ -15,10 +14,8 @@ export const castArray = <T>(value: T): T extends any[] ? T : T[] => {
 	return (Array.isArray(value) ? value : [value]) as T extends any[] ? T : T[];
 };
 
-export const configPreparedStatement = db
+export const getConfig = db
 	.select()
 	.from(Config)
 	.where(eq(Config.id, sql.placeholder("guildId")))
 	.prepare();
-
-export type ConfigRow = ReturnType<typeof configPreparedStatement["get"]>;
