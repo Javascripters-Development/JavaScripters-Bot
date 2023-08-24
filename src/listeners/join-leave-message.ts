@@ -6,7 +6,7 @@ import {
 	userMention,
 } from "discord.js";
 import type { Listener } from "../types/listener.ts";
-import { getConfig, type ConfigRow } from "../utils.ts";
+import { configPreparedStatement, type ConfigRow } from "../utils.ts";
 
 const getTargetChannel = async (
 	dbConfig: ConfigRow,
@@ -45,7 +45,9 @@ export default [
 	{
 		event: "guildMemberAdd",
 		async handler(member) {
-			const dbConfig = getConfig(member.guild.id);
+			const dbConfig = configPreparedStatement.get({
+				guildId: member.guild.id,
+			});
 			const targetChannel = await getTargetChannel(dbConfig, member);
 
 			if (!targetChannel) return;
@@ -59,7 +61,9 @@ export default [
 	{
 		event: "guildMemberRemove",
 		async handler(member) {
-			const dbConfig = getConfig(member.guild.id);
+			const dbConfig = configPreparedStatement.get({
+				guildId: member.guild.id,
+			});
 			const targetChannel = await getTargetChannel(dbConfig, member);
 
 			if (!targetChannel) return;
