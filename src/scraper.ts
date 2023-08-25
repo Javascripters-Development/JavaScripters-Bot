@@ -45,8 +45,7 @@ export function htmlToMarkdown(contents: string, limit = 2000) {
 			.replaceAll(/<\/?u>/g, "__")
 			.replaceAll(/<\/?(del|s)>/g, "~~")
 			.replaceAll(/<\/?(code|kbd)>/g, "`")
-			.replaceAll("<li>", "\n- ")
-			.replaceAll("</li>", "")
+			.replaceAll(/<li>(.+?)<\/li>/g, "\n- $1")
 			.replaceAll(/<\/?[ou]l>/g, "")
 			.trim(),
 	);
