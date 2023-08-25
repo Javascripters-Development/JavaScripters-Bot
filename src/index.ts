@@ -11,7 +11,7 @@ import { readdir } from "fs/promises";
 import { castArray } from "./utils.ts";
 import type { Listener } from "./types/listener.ts";
 
-export const client = new Client({
+const client = new Client({
 	intents: [
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.GuildMessages,
