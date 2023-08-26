@@ -20,10 +20,10 @@ export default {
             return {embeds: [new EmbedBuilder().setTitle(title).setColor(0xFF0000).setDescription(desc)], ephemeral: true};
         }
 
-        // if (!(<GuildMemberRoleManager>interaction.member!.roles).cache.find(r => r.id === "1140826891599757382" || r.id === "722933309633462274")) {
-        //     await interaction.reply(errMsg("Insufficient permissions", "You require the following roles: `Owner` | `QOTW Manger`"));
-        //     return;
-        // }
+        if (!(<GuildMemberRoleManager>interaction.member!.roles).cache.find(r => r.id === "1140826891599757382" || r.id === "722933309633462274")) {
+            await interaction.reply(errMsg("Insufficient permissions", "You require the following roles: `Owner` | `QOTW Manger`"));
+            return;
+        }
 
         const timeRegex: RegExpExecArray | null = /^(\d+):(\d+):(\d+)$/gm.exec(interaction.options.getString("time")!);
 
