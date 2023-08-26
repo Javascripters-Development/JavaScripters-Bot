@@ -19,3 +19,7 @@ export const getConfig = db
 	.from(Config)
 	.where(eq(Config.id, sql.placeholder("guildId")))
 	.prepare();
+
+export function isEmptyObject<T extends object>(obj: T): boolean {
+	return typeof obj === "object" && Object.keys(obj).length === 0;
+}

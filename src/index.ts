@@ -1,7 +1,5 @@
 import loadCommands from "djs-fsrouter";
 import {
-	Client,
-	GatewayIntentBits,
 	Events,
 	type ClientEvents,
 	type Awaitable,
@@ -10,15 +8,7 @@ import { join } from "path";
 import { readdir } from "fs/promises";
 import { castArray } from "./utils.ts";
 import type { Listener } from "./types/listener.ts";
-
-const client = new Client({
-	intents: [
-		GatewayIntentBits.Guilds,
-		GatewayIntentBits.GuildMessages,
-		GatewayIntentBits.MessageContent,
-		GatewayIntentBits.GuildMembers,
-	],
-});
+import { client } from "./Exports.js";
 
 client.once(Events.ClientReady, async (bot) => {
 	try {
@@ -57,4 +47,4 @@ client.once(Events.ClientReady, async (bot) => {
 	console.log(`Bot ${bot.user.username} ready!`);
 });
 
-client.login(process.env.TOKEN);
+await client.login(process.env.TOKEN);
