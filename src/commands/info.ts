@@ -1,18 +1,17 @@
+// noinspection JSUnusedGlobalSymbols
+
 import {
-	type ChatInputCommandInteraction,
 	type APIEmbed,
-	ApplicationCommandType,
 	channelMention,
 } from "discord.js";
 import type { Command } from "djs-fsrouter";
 
-export const type = ApplicationCommandType.ChatInput;
 const Info: Command = {
 	description: "Get info about the bot and server",
 	defaultMemberPermissions: "0",
 	async run(interaction) {
 		if (!interaction.guild) {
-			interaction.reply({
+			await interaction.reply({
 				content: "Run this command in a server to get server info",
 				ephemeral: true,
 			});
