@@ -1,5 +1,5 @@
 import { load, type CheerioAPI } from "cheerio";
-import decodeEntities from "html-entities-decode";
+import decodeEntities from "entities-decode";
 
 export type CheerioNode = {
 	name: string;
