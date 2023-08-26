@@ -1,4 +1,4 @@
-import { load, type CheerioAPI } from "cheerio";
+import { load, type CheerioAPI, type Element } from "cheerio";
 import decodeEntities from "entities-decode";
 
 export type CheerioNode = {
@@ -34,23 +34,35 @@ export default async function scrape(url: string, skipCache = false) {
 	return crawler;
 }
 
-export function htmlToMarkdown(contents: string, limit = 2000) {
-	const markdown = decodeEntities(
-		contents
-			.replaceAll("\n", "")
-			.replaceAll(/<a .*?href="([^"]+)".*?>(.+?)<\/a>/g, "[$2]($1)")
-			.replaceAll("<hr>", "\n——————————\n")
-			.replaceAll(/<\/?(strong|b)>/g, "**")
-			.replaceAll(/<\/?(em|i)>/g, "*")
-			.replaceAll(/<\/?u>/g, "__")
-			.replaceAll(/<\/?(del|s)>/g, "~~")
-			.replaceAll(/<\/?(code|kbd)>/g, "`")
-			.replaceAll(/<li>(.+?)<\/li>/g, "\n- $1")
-			.replaceAll(/<\/?[ou]l>/g, "")
-			.trim(),
-	);
-
-	return markdown.length < limit
-		? markdown
-		: `${markdown.substring(0, limit - 1)}…`;
+export function elementToMarkdown(element: Element) {
+	let md = "";
+	for (const child of element.children) {
+		if (child.type === "text") md += child.data.replaceAll("\n", "");
+		else if (child.type === "tag") md += elementToMarkdown(child);
+	}
+	md = decodeEntities(md.trim());
+	switch (element.name) {
+		case "a":
+			return `[${md}](${element.attribs.href})`;
+		case "hr":
+			return "\n——————————\n";
+		case "strong":
+		case "b":
+			return `**${md}**`;
+		case "em":
+		case "i":
+			return `*${md}*`;
+		case "u":
+			return `__${md}__`;
+		case "del":
+		case "s":
+			return `~~${md}~~`;
+		case "code":
+		case "kbd":
+			return `\`${md}\``;
+		case "li":
+			return `\n- ${md}`;
+		default:
+			return md;
+	}
 }

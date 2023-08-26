@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType } from "discord.js";
 import type { Command } from "djs-fsrouter";
 
-import scrape, { htmlToMarkdown } from "../scraper.ts";
+import scrape, { elementToMarkdown } from "../scraper.ts";
 import type { Element } from "cheerio";
 
 const MDN_URL = "https://developer.mozilla.org/en-US/";
@@ -79,9 +79,7 @@ const Info: Command = {
 		const paragraphs: string[] = [];
 		let totalLength = 0;
 		for (const introParagraph of intro) {
-			const text = htmlToMarkdown(
-				crawler(introParagraph).prop("innerHTML") || "",
-			);
+			const text = elementToMarkdown(introParagraph);
 			totalLength += text.length;
 			if (totalLength < 2048) paragraphs.push(fixCodeLinks(text));
 			else break;
