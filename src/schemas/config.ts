@@ -9,6 +9,10 @@ export const Config = sqliteTable("guildConfig", {
 
 	gatewayLeaveTitle: text("gatewayLeaveTitle"),
 	gatewayLeaveContent: text("gatewayLeaveContent"),
+
+	suggestionChannel: text("suggestionChannel"),
+	suggestionUpvoteEmoji: text("suggestionUpvoteEmoji"),
+	suggestionDownvoteEmoji: text("suggestionDownvoteEmoji"),
 });
 export type ConfigSelect = InferSelectModel<typeof Config>;
 export type ConfigInsert = InferInsertModel<typeof Config>;

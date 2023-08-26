@@ -1,3 +1,4 @@
+import { hyperlink as djsHyperlink, hideLinkEmbed } from "discord.js";
 import db from "./db.ts";
 import { Config } from "./schemas/config.ts";
 import { sql, eq } from "drizzle-orm";
@@ -19,3 +20,12 @@ export const getConfig = db
 	.from(Config)
 	.where(eq(Config.id, sql.placeholder("guildId")))
 	.prepare();
+
+/**
+ * Formats the content and the URL into a masked URL without embed.
+ * @see {@link djsHyperlink}.
+ */
+export const hyperlink = <C extends string, U extends string>(
+	content: C,
+	url: U,
+) => djsHyperlink(content, hideLinkEmbed(url));
