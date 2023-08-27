@@ -5,7 +5,10 @@ import {
 	TextInputStyle,
 	inlineCode,
 } from "discord.js";
-import { Suggestion } from "../structures/suggestion.ts";
+import {
+	Suggestion,
+	type SuggestionButtonId,
+} from "../structures/suggestion.ts";
 import type { Listener } from "../types/listener.ts";
 import { Time, capitalizeFirstLetter, getConfig, hyperlink } from "../utils.ts";
 import { handleUserError } from "../errors.ts";
@@ -47,7 +50,10 @@ export default {
 			);
 		}
 
-		const status = Suggestion.BUTTON_ID_STATUS_MAP[interaction.customId];
+		const status =
+			Suggestion.BUTTON_ID_STATUS_MAP[
+				interaction.customId as SuggestionButtonId
+			];
 
 		const textInput = new TextInputBuilder()
 			.setCustomId(MODAL_INPUT_ID)

@@ -15,7 +15,10 @@ import {
 } from "discord.js";
 import { ZERO_WIDTH_SPACE } from "../constants.ts";
 
-export type SuggestionStatus = typeof Suggestion.BUTTON_ID_STATUS_MAP[string];
+export type SuggestionButtonId =
+	typeof Suggestion.BUTTON_ID[keyof typeof Suggestion.BUTTON_ID];
+export type SuggestionStatus =
+	typeof Suggestion.BUTTON_ID_STATUS_MAP[keyof typeof Suggestion.BUTTON_ID_STATUS_MAP];
 
 export interface SuggestionStatusOptions {
 	status: SuggestionStatus;
@@ -28,13 +31,15 @@ export class Suggestion {
 		APPROVE: "suggestion-approve",
 		CONSIDER: "suggestion-consider",
 		REJECT: "suggestion-reject",
-	};
+	} as const;
 
 	public static readonly BUTTON_ID_STATUS_MAP = {
 		[this.BUTTON_ID.APPROVE]: "approved",
 		[this.BUTTON_ID.CONSIDER]: "considering",
 		[this.BUTTON_ID.REJECT]: "rejected",
-	} as const;
+	} as const satisfies {
+		[Key in SuggestionButtonId]: string;
+	};
 
 	/** The maximum length for the suggestion title. */
 	public static readonly MAX_TITLE_LENGTH = 100;
@@ -55,7 +60,27 @@ export class Suggestion {
 	public getMessageOptions(status?: SuggestionStatusOptions) {
 		return {
 			embeds: [this.getSuggestionEmbed(this.author, status)],
-			components: [this.getComponentRow()],
+			components: [
+				new ActionRowBuilder<ButtonBuilder>({
+					components: [
+						new ButtonBuilder({
+							label: "Approve",
+							customId: Suggestion.BUTTON_ID.APPROVE,
+							style: ButtonStyle.Success,
+						}),
+						new ButtonBuilder({
+							label: "Consider",
+							customId: Suggestion.BUTTON_ID.CONSIDER,
+							style: ButtonStyle.Primary,
+						}),
+						new ButtonBuilder({
+							label: "Reject",
+							customId: Suggestion.BUTTON_ID.REJECT,
+							style: ButtonStyle.Danger,
+						}),
+					],
+				}),
+			],
 		} as BaseMessageOptions;
 	}
 
@@ -106,28 +131,6 @@ export class Suggestion {
 			description,
 			fields,
 			author,
-		});
-	}
-
-	private getComponentRow() {
-		return new ActionRowBuilder<ButtonBuilder>({
-			components: [
-				new ButtonBuilder({
-					label: "Approve",
-					customId: Suggestion.BUTTON_ID.APPROVE,
-					style: ButtonStyle.Success,
-				}),
-				new ButtonBuilder({
-					label: "Consider",
-					customId: Suggestion.BUTTON_ID.CONSIDER,
-					style: ButtonStyle.Primary,
-				}),
-				new ButtonBuilder({
-					label: "Reject",
-					customId: Suggestion.BUTTON_ID.REJECT,
-					style: ButtonStyle.Danger,
-				}),
-			],
 		});
 	}
 
@@ -183,7 +186,8 @@ export class Suggestion {
 		const validButtonIds = Object.values(this.BUTTON_ID);
 
 		return (
-			interaction.isButton() && validButtonIds.includes(interaction.customId)
+			interaction.isButton() &&
+			validButtonIds.includes(interaction.customId as SuggestionButtonId)
 		);
 	}
 }
