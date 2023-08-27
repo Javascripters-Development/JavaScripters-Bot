@@ -21,6 +21,11 @@ export const getConfig = db
 	.where(eq(Config.id, sql.placeholder("guildId")))
 	.prepare();
 
+// TEMP: use .all() and select the first row manually, .get() does not work
+getConfig.get = (placeholderValues?: Record<string, unknown> | undefined) => {
+	return getConfig.all(placeholderValues)[0];
+};
+
 /**
  * Formats the content and the URL into a masked URL without embed.
  * @see {@link djsHyperlink}.
