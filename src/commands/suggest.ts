@@ -19,13 +19,13 @@ const Suggest: Command = {
 			name: "title",
 			description: "The title of the suggestion",
 			required: true,
-			maxLength: 100,
+			maxLength: Suggestion.MAX_TITLE_LENGTH,
 		},
 		{
 			type: ApplicationCommandOptionType.String,
 			name: "description",
 			description: "The description of the suggestion",
-			maxLength: 2000,
+			maxLength: Suggestion.MAX_DESCRIPTION_LENGTH,
 		},
 	],
 	async run(interaction) {

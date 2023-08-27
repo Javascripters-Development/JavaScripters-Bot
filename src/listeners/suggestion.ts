@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 import { Suggestion } from "../structures/suggestion.ts";
 import type { Listener } from "../types/listener.ts";
-import { capitalizeFirstLetter, getConfig, hyperlink } from "../utils.ts";
+import { Time, capitalizeFirstLetter, getConfig, hyperlink } from "../utils.ts";
 import { handleUserError } from "../errors.ts";
 
 const MODAL_ID = "suggestion-modal";
@@ -54,7 +54,7 @@ export default {
 			.setStyle(TextInputStyle.Paragraph)
 			.setLabel("What's the reason?")
 			.setPlaceholder("Leave empty if no reason necessary...")
-			.setMaxLength(2000)
+			.setMaxLength(Suggestion.MAX_REASON_LENGTH)
 			.setRequired(false);
 		const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents([
 			textInput,
@@ -69,7 +69,7 @@ export default {
 		await interaction.showModal(modal);
 
 		const modalInteraction = await interaction.awaitModalSubmit({
-			time: 1000 * 60 * 10,
+			time: Time.Minute * 10,
 		});
 
 		const suggestion = Suggestion.createFromMessage(interaction.message);

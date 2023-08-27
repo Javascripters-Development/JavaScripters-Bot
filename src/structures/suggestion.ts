@@ -36,6 +36,15 @@ export class Suggestion {
 		[this.BUTTON_ID.REJECT]: "rejected",
 	} as const;
 
+	/** The maximum length for the suggestion title. */
+	public static readonly MAX_TITLE_LENGTH = 100;
+
+	/** The maximum length for the suggestion description. */
+	public static readonly MAX_DESCRIPTION_LENGTH = 2000;
+
+	/** The maximum length for the status reason. */
+	public static readonly MAX_REASON_LENGTH = 2000;
+
 	constructor(
 		public readonly author: GuildMember | EmbedAuthorData,
 		public readonly title: string,

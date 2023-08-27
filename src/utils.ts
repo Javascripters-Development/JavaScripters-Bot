@@ -39,3 +39,20 @@ export const hyperlink = <C extends string, U extends string>(
 export const capitalizeFirstLetter = <T extends string>(
 	value: T,
 ): Capitalize<T> => (value[0].toUpperCase() + value.slice(1)) as Capitalize<T>;
+
+/**
+ * Utility for human readable time values.
+ *
+ * @example
+ * setTimeout(() => {}, Time.Hour * 2) // 2 hour timer
+ * setTimeout(() => {}, Time.Day) // 1 day timer
+ */
+export enum Time {
+	Second = 1000,
+	Minute = Time.Second * 60,
+	Hour = Time.Minute * 60,
+	Day = Time.Hour * 24,
+	Week = Time.Day * 7,
+	Year = Time.Day * 365,
+	Month = Time.Year / 12,
+}
