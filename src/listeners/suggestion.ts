@@ -62,15 +62,15 @@ export default {
 			.setPlaceholder("Leave empty if no reason necessary...")
 			.setMaxLength(Suggestion.MAX_REASON_LENGTH)
 			.setRequired(false);
-		const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents([
+		const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
 			textInput,
-		]);
+		);
 		const modal = new ModalBuilder()
 			.setCustomId(MODAL_ID)
 			.setTitle(
 				`${capitalizeFirstLetter(Suggestion.getStatusVerb(status))} suggestion`,
 			)
-			.addComponents([actionRow]);
+			.addComponents(actionRow);
 
 		await interaction.showModal(modal);
 
