@@ -29,3 +29,13 @@ export const hyperlink = <C extends string, U extends string>(
 	content: C,
 	url: U,
 ) => djsHyperlink(content, hideLinkEmbed(url));
+
+/**
+ * Capitalizes the first letter of a string.
+ *
+ * @example
+ * capitalizeFirstLetter('hello world') // "Hello world"
+ */
+export const capitalizeFirstLetter = <T extends string>(
+	value: T,
+): Capitalize<T> => (value[0].toUpperCase() + value.slice(1)) as Capitalize<T>;

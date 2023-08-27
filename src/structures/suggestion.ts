@@ -5,9 +5,13 @@ import {
 	Colors,
 	EmbedBuilder,
 	type BaseMessageOptions,
-	type GuildMember,
+	GuildMember,
 	Message,
 	type EmbedData,
+	type Interaction,
+	ButtonInteraction,
+	time,
+	type EmbedAuthorData,
 } from "discord.js";
 import { ZERO_WIDTH_SPACE } from "../constants.ts";
 
@@ -33,7 +37,7 @@ export class Suggestion {
 	} as const;
 
 	constructor(
-		public readonly author: GuildMember,
+		public readonly author: GuildMember | EmbedAuthorData,
 		public readonly title: string,
 		public readonly description?: string,
 	) {}
@@ -41,24 +45,34 @@ export class Suggestion {
 	/** Get the {@link BaseMessageOptions} for the suggestion. */
 	public getMessageOptions(status?: SuggestionStatusOptions) {
 		return {
-			embeds: [this.getSuggestionEmbed(status)],
+			embeds: [this.getSuggestionEmbed(this.author, status)],
 			components: [this.getComponentRow()],
 		} as BaseMessageOptions;
 	}
 
 	private formatStatusText({ status, member }: SuggestionStatusOptions) {
+		let statusText = "";
+
 		switch (status) {
 			case "approved":
-				return `Approved by ${member.user.username}`;
+				statusText = `Approved by ${member.user.username}`;
+				break;
 			case "considering":
-				return `Considered by ${member.user.username}`;
+				statusText = `Considered by ${member.user.username}`;
+				break;
 			case "rejected":
-				return `Rejected by ${member.user.username}`;
+				statusText = `Rejected by ${member.user.username}`;
+				break;
 		}
+
+		return `${statusText} (${time(new Date(), "R")})`;
 	}
 
-	private getSuggestionEmbed(status?: SuggestionStatusOptions) {
-		const { author, title, description } = this;
+	private getSuggestionEmbed(
+		authorData: GuildMember | EmbedAuthorData,
+		status?: SuggestionStatusOptions,
+	) {
+		const { title, description } = this;
 
 		const fields: EmbedData["fields"] | undefined = status
 			? [
@@ -69,15 +83,20 @@ export class Suggestion {
 			  ]
 			: undefined;
 
+		const author =
+			authorData instanceof GuildMember
+				? {
+						name: authorData.user.username,
+						iconURL: authorData.displayAvatarURL() ?? undefined,
+				  }
+				: authorData;
+
 		return new EmbedBuilder({
-			color: Colors.White,
+			color: this.getStatusEmbedColor(status?.status),
 			title,
 			description,
 			fields,
-			author: {
-				name: author.user.username,
-				icon_url: author.avatarURL() ?? undefined,
-			},
+			author,
 		});
 	}
 
@@ -113,12 +132,17 @@ export class Suggestion {
 			);
 		}
 
-		// rome-ignore lint/style/noNonNullAssertion: <explanation>
-		return new this(message.member, embed.title!, embed.description!);
+		return new this(
+			// rome-ignore lint/style/noNonNullAssertion: <explanation>
+			{ name: embed.author!.name, iconURL: embed.author?.iconURL },
+			// rome-ignore lint/style/noNonNullAssertion: <explanation>
+			embed.title!,
+			// rome-ignore lint/style/noNonNullAssertion: <explanation>
+			embed.description!,
+		);
 	}
 
-	/** Get the Embed {@link Colors} for certain status. */
-	static getStatusEmbedColor(status: SuggestionStatus) {
+	private getStatusEmbedColor(status?: SuggestionStatus) {
 		switch (status) {
 			case "approved":
 				return Colors.Green;
@@ -126,6 +150,31 @@ export class Suggestion {
 				return Colors.Orange;
 			case "rejected":
 				return Colors.Red;
+			default:
+				return Colors.White;
 		}
+	}
+
+	/** Get the current status as verb. */
+	static getStatusVerb(status: SuggestionStatus) {
+		switch (status) {
+			case "approved":
+				return "approve";
+			case "considering":
+				return "consider";
+			case "rejected":
+				return "reject";
+		}
+	}
+
+	/** Check whether the interaction is a valid. */
+	static isValidInteraction(
+		interaction: Interaction,
+	): interaction is ButtonInteraction {
+		const validButtonIds = Object.values(this.BUTTON_ID);
+
+		return (
+			interaction.isButton() && validButtonIds.includes(interaction.customId)
+		);
 	}
 }
