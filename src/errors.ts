@@ -1,6 +1,6 @@
-import { ChatInputCommandInteraction } from "discord.js";
+import { CommandInteraction, MessageComponentInteraction } from "discord.js";
 
-export type UserErrorContext = ChatInputCommandInteraction;
+export type UserErrorContext = CommandInteraction | MessageComponentInteraction;
 
 /**
  * Handles any kind of user error.
@@ -8,23 +8,14 @@ export type UserErrorContext = ChatInputCommandInteraction;
  * @param context The interaction/message context
  */
 export const handleUserError = (context: UserErrorContext, message: string) => {
-	if (context instanceof ChatInputCommandInteraction) {
-		return handleChatInputCommandInteraction(context, message);
-	}
-};
-
-const handleChatInputCommandInteraction = (
-	interaction: ChatInputCommandInteraction,
-	message: string,
-) => {
 	const messageOptions = {
 		content: `❌ ${message}`,
 		ephemeral: true,
 	};
 
-	if (!interaction.replied) {
-		return interaction.reply(messageOptions);
+	if (!context.replied) {
+		return context.reply(messageOptions);
 	} else {
-		return interaction.followUp(messageOptions);
+		return context.followUp(messageOptions);
 	}
 };

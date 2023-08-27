@@ -7,7 +7,8 @@ import {
 } from "discord.js";
 import { Suggestion } from "../structures/suggestion.ts";
 import type { Listener } from "../types/listener.ts";
-import { capitalizeFirstLetter, hyperlink } from "../utils.ts";
+import { capitalizeFirstLetter, getConfig, hyperlink } from "../utils.ts";
+import { handleUserError } from "../errors.ts";
 
 const MODAL_ID = "suggestion-modal";
 const MODAL_INPUT_ID = "suggestion-reason";
@@ -24,6 +25,27 @@ export default {
 			)
 		)
 			return;
+
+		const config = getConfig.get({ guildId: interaction.guildId });
+
+		if (
+			config?.suggestionManagerRole &&
+			!interaction.member.roles.cache.has(config.suggestionManagerRole)
+		) {
+			return handleUserError(
+				interaction,
+				`You're missing the manager role and ${inlineCode(
+					"ManageGuild",
+				)} permission`,
+			);
+		}
+
+		if (!interaction.member.permissions.has("ManageGuild")) {
+			return handleUserError(
+				interaction,
+				`You're missing the ${inlineCode("ManageGuild")} permission`,
+			);
+		}
 
 		const status = Suggestion.BUTTON_ID_STATUS_MAP[interaction.customId];
 

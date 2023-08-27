@@ -11,6 +11,7 @@ export const Config = sqliteTable("guildConfig", {
 	gatewayLeaveContent: text("gatewayLeaveContent"),
 
 	suggestionChannel: text("suggestionChannel"),
+	suggestionManagerRole: text("suggestionManagerRole"),
 	suggestionUpvoteEmoji: text("suggestionUpvoteEmoji"),
 	suggestionDownvoteEmoji: text("suggestionDownvoteEmoji"),
 });
