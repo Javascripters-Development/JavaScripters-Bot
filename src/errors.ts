@@ -1,5 +1,15 @@
 import { CommandInteraction, MessageComponentInteraction } from "discord.js";
 
+export class UserError extends Error {
+	constructor(
+		message?: string,
+		public readonly identifier?: string,
+		options?: ErrorOptions,
+	) {
+		super(message, options);
+	}
+}
+
 export type UserErrorContext = CommandInteraction | MessageComponentInteraction;
 
 /**
