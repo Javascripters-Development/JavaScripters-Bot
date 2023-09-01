@@ -61,3 +61,14 @@ export enum Time {
 	Year = Time.Day * 365,
 	Month = Time.Year / 12,
 }
+
+/**
+ * Find object key from value.
+ *
+ * @example
+ * getKeyByValue({ a: 1, b: 2, c: 3 }, 2) // "b"
+ */
+export const getKeyByValue = <const T>(
+	object: Record<PropertyKey, T>,
+	value: T,
+) => Object.keys(object).find((key) => object[key] === value);
