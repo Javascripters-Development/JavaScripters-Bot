@@ -33,6 +33,7 @@ export const Suggestion = sqliteTable("suggestion", {
 	description: text("description"),
 
 	guildId: text("guildId").notNull(),
+	channelId: text("channelId").notNull(),
 	messageId: text("messageId").notNull(),
 	userId: text("userId").notNull(),
 
