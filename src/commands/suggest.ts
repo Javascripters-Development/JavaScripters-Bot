@@ -11,7 +11,7 @@ import { Suggestion } from "../structures/suggestion.ts";
 export const type = ApplicationCommandType.ChatInput;
 
 const Suggest: Command = {
-	description: "Get info about the bot and server",
+	description: "Make a suggestion",
 	defaultMemberPermissions: "0",
 	options: [
 		{
@@ -53,29 +53,17 @@ const Suggest: Command = {
 			config.suggestionChannel,
 		)) as GuildTextBasedChannel;
 
-		const suggestion = new Suggestion(
-			interaction.member,
-			interaction.options.getString("title", true),
-			interaction.options.getString("description") ?? undefined,
-		);
-
-		const suggestionMessage = await suggestionChannel.send(
-			suggestion.getMessageOptions(),
-		);
-
-		await suggestionMessage.react(config.suggestionUpvoteEmoji ?? "👍");
-		await suggestionMessage.react(config.suggestionUpvoteEmoji ?? "👎");
-
-		await suggestionMessage.startThread({
-			name: `Suggestion: ${suggestion.title}`,
-			reason: `suggestion made by ${interaction.user.username}`,
+		const suggestion = await Suggestion.create({
+			title: interaction.options.getString("title", true),
+			description: interaction.options.getString("description") ?? undefined,
+			member: interaction.member,
+			channel: suggestionChannel,
+			dbConfig: config,
 		});
 
 		return interaction.reply({
-			content: `Your suggestion has been submitted, you can view it ${hyperlink(
-				"here",
-				suggestionMessage.url,
-			)}`,
+			// rome-ignore format: more readable when not formatted
+			content: `Your suggestion has been submitted, you can view it ${hyperlink("here", suggestion.messageUrl)}`,
 			ephemeral: true,
 		});
 	},
