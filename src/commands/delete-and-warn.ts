@@ -50,6 +50,8 @@ const DeleteAndWarn: MessageCommand = {
 							type: TextInput,
 							customId: "deletionReason",
 							label: "Reason",
+							placeholder: "This will be sent in DM to the author.",
+							maxLength: 512,
 							style: TextInputStyle.Short,
 						},
 					],
