@@ -1,21 +1,20 @@
 import {
 	PermissionFlagsBits,
 	ApplicationCommandType,
-	ComponentType,
 	TextInputStyle,
 } from "discord.js";
-const { ManageMessages } = PermissionFlagsBits;
-const { ActionRow, TextInput } = ComponentType;
+const { ManageMessages, ModerateMembers } = PermissionFlagsBits;
+import { modalInput } from "../components.ts";
 import type { MessageCommand } from "djs-fsrouter";
 
 export const customId = "delAndWarn";
 
 const DeleteAndWarn: MessageCommand = {
 	type: ApplicationCommandType.Message,
-	defaultMemberPermissions: ManageMessages,
+	defaultMemberPermissions: ManageMessages | ModerateMembers,
 	dmPermission: false,
 	run: async (interaction) => {
-		const { channel } = interaction;
+		const { channel, targetMessage } = interaction;
 		if (!channel)
 			return interaction.reply({
 				ephemeral: true,
@@ -27,35 +26,37 @@ const DeleteAndWarn: MessageCommand = {
 				content: "Cannot use this command in DMs",
 			});
 
-		const {
-			guild: { members },
-		} = channel;
-		const myself = members.me || (await members.fetchMe());
-		if (!channel.permissionsFor(myself).has(ManageMessages)) {
+		if (!targetMessage.deletable) {
 			return interaction.reply({
 				ephemeral: true,
 				content:
 					"I do not have the permission to delete messages in this channel.",
 			});
 		}
-		const { id, author } = interaction.targetMessage;
+		const { id, author } = targetMessage;
+		// targetMessage.member is always null for some reason
+		const member = await channel.guild.members.fetch(author);
+
 		interaction.showModal({
 			title: `Deleting ${author.displayName}'s message`,
 			customId: `${author.id}_${id}_${customId}`,
 			components: [
-				{
-					type: ActionRow,
-					components: [
-						{
-							type: TextInput,
-							customId: "deletionReason",
-							label: "Reason",
-							placeholder: "This will be sent in DM to the author.",
-							maxLength: 512,
-							style: TextInputStyle.Short,
-						},
-					],
-				},
+				modalInput({
+					customId: "deletionReason",
+					label: "Reason",
+					placeholder: "This will be sent in DM to the author.",
+					maxLength: 512,
+					style: TextInputStyle.Short,
+				}),
+				modalInput({
+					customId: "timeout",
+					required: false,
+					label: "Timeout",
+					placeholder: member.moderatable
+						? "e.g 30m, 3h, 1d"
+						: "This will have no effet; I do not have the permission to time this member out",
+					style: TextInputStyle.Short,
+				}),
 			],
 		});
 	},
