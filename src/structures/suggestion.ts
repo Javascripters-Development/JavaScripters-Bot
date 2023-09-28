@@ -14,8 +14,7 @@ import {
 	type SuggestionStatus,
 } from "../schemas/suggestion.ts";
 import db from "../db.ts";
-import { and, eq } from "drizzle-orm";
-import { SuggestionVotes } from "../schemas/suggestionVotes.ts";
+import { eq } from "drizzle-orm";
 import { SuggestionManager } from "./managers/suggestionManager.ts";
 import { client } from "../client.ts";
 import type { ConfigSelect } from "../schemas/config.ts";
@@ -42,14 +41,7 @@ export class Suggestion extends Votable<Snowflake> {
 	public static readonly MAX_REASON_LENGTH = 2000;
 
 	constructor(private readonly raw: SuggestionSelectWithVotes) {
-		const upvotedUserIds = raw.votes
-			.filter((vote) => vote.isUpvote === true)
-			.map((vote) => vote.userId);
-		const downvotedUserIds = raw.votes
-			.filter((vote) => vote.isUpvote === false)
-			.map((vote) => vote.userId);
-
-		super(upvotedUserIds, downvotedUserIds);
+		super(raw.upvotedBy?.split(","), raw.downvotedBy?.split(","));
 	}
 
 	/** Upvote the suggestion. */
@@ -58,30 +50,34 @@ export class Suggestion extends Votable<Snowflake> {
 
 		super.upvote(userId);
 
-		await db
-			.insert(SuggestionVotes)
-			.values({
-				suggestionId: this.raw.id,
-				userId,
-				isUpvote: true,
+		const raw = await db
+			.select({
+				downvotedBy: DbSuggestion.downvotedBy,
+				upvotedBy: DbSuggestion.upvotedBy,
 			})
-			.onConflictDoUpdate({
-				target: [SuggestionVotes.suggestionId, SuggestionVotes.userId],
-				where: and(
-					eq(SuggestionVotes.suggestionId, this.raw.id),
-					eq(SuggestionVotes.userId, userId),
-				),
-				set: {
-					isUpvote: true,
-					updatedAt: new Date(),
-				},
-			});
+			.from(DbSuggestion)
+			.where(eq(DbSuggestion.id, this.raw.id))
+			.get();
 
-		const voteIndex = this.raw.votes.findIndex(
-			(vote) => vote.userId === userId,
-		);
+		const upvotes = new Set(raw?.upvotedBy?.split(",") ?? []);
+		const downvotes = new Set(raw?.downvotedBy?.split(",") ?? []);
 
-		this.raw.votes[voteIndex].isUpvote = true;
+		upvotes.add(userId);
+		downvotes.delete(userId);
+
+		const serializedUpvotes = [...upvotes].join(",") || null;
+		const serializedDownvotes = [...downvotes].join(",") || null;
+
+		await db
+			.update(DbSuggestion)
+			.set({
+				upvotedBy: serializedUpvotes,
+				downvotedBy: serializedDownvotes,
+			})
+			.where(eq(DbSuggestion.id, this.raw.id));
+
+		this.raw.upvotedBy = serializedUpvotes;
+		this.raw.downvotedBy = serializedDownvotes;
 	}
 
 	/** Downvote the suggestion. */
@@ -90,30 +86,34 @@ export class Suggestion extends Votable<Snowflake> {
 
 		super.downvote(userId);
 
-		await db
-			.insert(SuggestionVotes)
-			.values({
-				suggestionId: this.raw.id,
-				userId,
-				isUpvote: false,
+		const raw = await db
+			.select({
+				downvotedBy: DbSuggestion.downvotedBy,
+				upvotedBy: DbSuggestion.upvotedBy,
 			})
-			.onConflictDoUpdate({
-				target: [SuggestionVotes.suggestionId, SuggestionVotes.userId],
-				where: and(
-					eq(SuggestionVotes.suggestionId, this.raw.id),
-					eq(SuggestionVotes.userId, userId),
-				),
-				set: {
-					isUpvote: false,
-					updatedAt: new Date(),
-				},
-			});
+			.from(DbSuggestion)
+			.where(eq(DbSuggestion.id, this.raw.id))
+			.get();
 
-		const voteIndex = this.raw.votes.findIndex(
-			(vote) => vote.userId === userId,
-		);
+		const upvotes = new Set(raw?.upvotedBy?.split(",") ?? []);
+		const downvotes = new Set(raw?.downvotedBy?.split(",") ?? []);
 
-		this.raw.votes[voteIndex].isUpvote = false;
+		upvotes.delete(userId);
+		downvotes.add(userId);
+
+		const serializedUpvotes = [...upvotes].join(",") || null;
+		const serializedDownvotes = [...downvotes].join(",") || null;
+
+		await db
+			.update(DbSuggestion)
+			.set({
+				upvotedBy: serializedUpvotes,
+				downvotedBy: serializedDownvotes,
+			})
+			.where(eq(DbSuggestion.id, this.raw.id));
+
+		this.raw.upvotedBy = serializedUpvotes;
+		this.raw.downvotedBy = serializedDownvotes;
 	}
 
 	/** Remove the user's vote for the suggestion. */
@@ -189,11 +189,11 @@ export class Suggestion extends Votable<Snowflake> {
 	}
 
 	get upvotes(): number {
-		return this.raw.votes.filter((vote) => vote.isUpvote === true).length;
+		return this.raw.upvotedBy?.split(",").length ?? 0;
 	}
 
 	get downvotes(): number {
-		return this.raw.votes.filter((vote) => vote.isUpvote === false).length;
+		return this.raw.downvotedBy?.split(",").length ?? 0;
 	}
 
 	get updatedAt(): Date {

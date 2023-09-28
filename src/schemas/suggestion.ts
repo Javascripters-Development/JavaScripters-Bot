@@ -43,6 +43,9 @@ export const Suggestion = sqliteTable("suggestion", {
 	statusReason: text("statusReason"),
 	statusUserId: text("statusUserId"),
 
+	upvotedBy: text("upvotedBy"),
+	downvotedBy: text("downvotedBy"),
+
 	updatedAt: int("updatedAt", { mode: "timestamp" })
 		.default(sql`(strftime('%s', 'now'))`)
 		.notNull(),

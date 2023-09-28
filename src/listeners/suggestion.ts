@@ -175,7 +175,7 @@ export default [
 				}
 			}
 
-			SuggestionUtil.updateMessage(suggestion, config);
+			await SuggestionUtil.updateMessage(suggestion, config);
 		},
 	},
 ] as Listener[];
