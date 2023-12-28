@@ -69,6 +69,7 @@ export const SuggestionUtil = {
 		throw new Error(`"${status}" is not a valid suggestion status`);
 	},
 
+	/** Get the message options for the suggestion. */
 	async getMessageOptions(
 		suggestion: DiscordSuggestion,
 		dbConfig?: ConfigSelect,
@@ -147,6 +148,7 @@ export const SuggestionUtil = {
 		};
 	},
 
+	/** Check if the interaction is a valid suggestion button interaction. */
 	isValidInteraction(
 		interaction: Interaction,
 	): interaction is ButtonInteraction {
@@ -158,6 +160,7 @@ export const SuggestionUtil = {
 		);
 	},
 
+	/** Check if the interaction is a valid suggestion vote button interaction. */
 	isValidVoteInteraction(
 		interaction: Interaction,
 	): interaction is ButtonInteraction {
@@ -171,6 +174,7 @@ export const SuggestionUtil = {
 		);
 	},
 
+	/** Get the {@link DiscordSuggestion} from the {@link Message} instance. */
 	getInstanceFromMessage(message: Message): Promise<DiscordSuggestion> {
 		const idRegex = /ID: (\d+)/i;
 		const firstEmbed = message.embeds.at(0);
@@ -184,6 +188,7 @@ export const SuggestionUtil = {
 		return SuggestionManager.getFromId(parseInt(extractedId));
 	},
 
+	/** Update the suggestion message. */
 	async updateMessage(
 		suggestion: DiscordSuggestion,
 		dbConfig?: ConfigSelect,
