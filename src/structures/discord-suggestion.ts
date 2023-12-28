@@ -80,12 +80,14 @@ export class DiscordSuggestion extends Suggestion {
 			suggestion,
 			dbConfig,
 		);
-		await message.edit(messageOptions);
 
-		await message.startThread({
-			name: `Suggestion: ${title}`,
-			reason: `New suggestion made by ${member.user.username}`,
-		});
+		if (message.editable) await message.edit(messageOptions);
+
+		if (!message.hasThread)
+			await message.startThread({
+				name: `Suggestion: ${title}`,
+				reason: `New suggestion made by ${member.user.username}`,
+			});
 
 		return suggestion;
 	}

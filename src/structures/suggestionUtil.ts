@@ -196,6 +196,9 @@ export const SuggestionUtil = {
 		const suggestionMessage = await suggestion.getMessage();
 		const messageOptions = await this.getMessageOptions(suggestion, dbConfig);
 
+		// Ensure the message can be edited
+		if (!suggestionMessage.editable) return;
+
 		await suggestionMessage.edit(messageOptions);
 
 		// Lock thread if suggestion is accepted/rejected
