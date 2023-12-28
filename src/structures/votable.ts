@@ -1,3 +1,4 @@
+import type { Awaitable } from "discord.js";
 import { UserError } from "../errors.ts";
 
 export const VOTABLE_ALREADY_VOTED = "AlreadyVoted";
@@ -20,7 +21,9 @@ export class Votable<T> {
 	 *
 	 * @throws {UserError} User already upvoted.
 	 */
-	protected upvote(identifier: T): void {
+	protected async upvote(identifier: T): Promise<void> {
+		if (!await this.canVote()) return
+
 		if (this._votes.get(identifier) === true) {
 			throw new UserError("Already upvoted", VOTABLE_ALREADY_VOTED);
 		}
@@ -33,12 +36,19 @@ export class Votable<T> {
 	 *
 	 * @throws {UserError} User already downvoted.
 	 */
-	protected downvote(identifier: T): void {
+	protected async downvote(identifier: T): Promise<void> {
+		if (!await this.canVote()) return
+
 		if (this._votes.get(identifier) === false) {
 			throw new UserError("Already downvoted", VOTABLE_ALREADY_VOTED);
 		}
 
 		this._votes.set(identifier, false);
+	}
+
+	/** Check if this instance can be downvoted. */
+	public canVote(): Awaitable<boolean> {
+		return true
 	}
 
 	/** Removes a vote from the {@link Votable} instance. */

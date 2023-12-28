@@ -12,12 +12,14 @@ import {
 	ButtonInteraction,
 } from "discord.js";
 import type {
+	SuggestionSelect,
 	SuggestionStatus,
 	UpdatedSuggestionStatus,
 } from "../schemas/suggestion.ts";
-import type { DiscordSuggestion } from "./discord-suggestion.ts";
 import type { ConfigSelect } from "../schemas/config.ts";
 import { capitalizeFirstLetter } from "../utils.ts";
+import { client } from "../client.ts";
+import { Suggestion } from "./suggestion.ts";
 
 export type SuggestionButtonId =
 	typeof SuggestionUtil.BUTTON_ID[keyof typeof SuggestionUtil.BUTTON_ID];
@@ -58,30 +60,36 @@ export const SuggestionUtil = {
 	},
 
 	getStatusVerb(status: SuggestionStatus) {
-		if (status === "ACCEPTED") {
+		if (status === "ACCEPTED")
 			return "accept";
-		} else if (status === "REJECTED") {
+		
+		if (status === "REJECTED")
 			return "reject";
-		}
+		
 
 		throw new Error(`"${status}" is not a valid suggestion status`);
 	},
 
 	/** Get the message options for the suggestion. */
 	async getMessageOptions(
-		suggestion: DiscordSuggestion,
+		suggestion: SuggestionSelect,
 		dbConfig?: ConfigSelect,
 	): Promise<BaseMessageOptions> {
-		const { title, description, status, statusReason } = suggestion;
-		const user = await suggestion.getUser();
-		const hasUpdatedStatus = suggestion.hasUpdatedStatus();
+		const { title, description, status, statusReason, userId, statusUserId, upvotedBy, downvotedBy } = suggestion;
+		
+		const upvotedByUserIds = upvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []
+		const downvotedByUserIds = downvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []
 
-		const fields: EmbedData["fields"] | undefined = hasUpdatedStatus
+		const user = await client.users.fetch(userId);
+		const statusUser = statusUserId ? await client.users.fetch(statusUserId) : null;
+		const hasUpdatedStatus = Boolean(statusUser)
+
+		const fields: EmbedData["fields"] | undefined = statusUser
 			? [
 					{
-						// rome-ignore format: doesn't need formatting
-						// rome-ignore lint/style/noNonNullAssertion: user can't be null if status has been updated
-						name: `${capitalizeFirstLetter(suggestion.status.toLocaleLowerCase())} by ${(await suggestion.getStatusUser())!.username} (${time(suggestion.updatedAt, "R")})`,
+						// biome-ignore format: doesn't need formatting
+						// biome-ignore lint/style/noNonNullAssertion: user can't be null if status has been updated
+						name: `${capitalizeFirstLetter(suggestion.status.toLocaleLowerCase())} by ${statusUser.username} (${time(suggestion.updatedAt, "R")})`,
 						value: statusReason ?? italic("N/A"),
 					},
 			  ]
@@ -108,7 +116,7 @@ export const SuggestionUtil = {
 
 		const getButtonBuilder = (status: UpdatedSuggestionStatus) =>
 			new ButtonBuilder({
-				// rome-ignore lint/style/noNonNullAssertion: status has to be valid
+				// biome-ignore lint/style/noNonNullAssertion: status has to be valid
 				label: capitalizeFirstLetter(this.getStatusVerb(status)!),
 				customId: this.BUTTON_ID[status],
 				style: this.STATUS_BUTTON_STYLE_MAP[status],
@@ -127,14 +135,14 @@ export const SuggestionUtil = {
 				new ActionRowBuilder<ButtonBuilder>({
 					components: [
 						new ButtonBuilder({
-							label: suggestion.upvotes.toString(),
+							label: upvotedByUserIds.length.toString(),
 							emoji: dbConfig?.suggestionUpvoteEmoji ?? "👍",
 							customId: this.VOTE_BUTTON_ID.UPVOTE,
 							style: ButtonStyle.Primary,
 							disabled: hasUpdatedStatus,
 						}),
 						new ButtonBuilder({
-							label: suggestion.downvotes.toString(),
+							label: downvotedByUserIds.length.toString(),
 							emoji: dbConfig?.suggestionDownvoteEmoji ?? "👎",
 							customId: this.VOTE_BUTTON_ID.DOWNVOTE,
 							style: ButtonStyle.Primary,
@@ -174,19 +182,20 @@ export const SuggestionUtil = {
 
 	/** Update the suggestion message. */
 	async updateMessage(
-		suggestion: DiscordSuggestion,
+		suggestion: SuggestionSelect,
 		dbConfig?: ConfigSelect,
 	): Promise<void> {
-		const suggestionMessage = await suggestion.getMessage();
+		const channel = await client.channels.fetch(suggestion.channelId)
+		const suggestionMessage = channel?.isTextBased() ? await channel?.messages.fetch(suggestion.messageId) : null
 		const messageOptions = await this.getMessageOptions(suggestion, dbConfig);
 
 		// Ensure the message can be edited
-		if (!suggestionMessage.editable) return;
+		if (!suggestionMessage?.editable) return;
 
 		await suggestionMessage.edit(messageOptions);
 
 		// Lock thread if suggestion is accepted/rejected
-		if (suggestion.hasUpdatedStatus() && !suggestionMessage.thread?.locked) {
+		if (suggestion.status !== 'POSTED' && !suggestionMessage.thread?.locked) {
 			await suggestionMessage.thread?.setLocked(
 				true,
 				"Suggestion got accepted or rejected",
