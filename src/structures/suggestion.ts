@@ -10,7 +10,7 @@ import {
 import { Votable } from "./votable.ts";
 import {
 	Suggestion as DbSuggestion,
-	type SuggestionSelectWithVotes,
+	type SuggestionSelect,
 	type SuggestionStatus,
 } from "../schemas/suggestion.ts";
 import db from "../db.ts";
@@ -40,7 +40,7 @@ export class Suggestion extends Votable<Snowflake> {
 	/** The maximum length for the status reason. */
 	public static readonly MAX_REASON_LENGTH = 2000;
 
-	constructor(private readonly raw: SuggestionSelectWithVotes) {
+	constructor(private readonly raw: SuggestionSelect) {
 		super(raw.upvotedBy?.split(","), raw.downvotedBy?.split(","));
 	}
 

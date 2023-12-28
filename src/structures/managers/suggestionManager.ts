@@ -5,9 +5,6 @@ import { eq, sql } from "drizzle-orm";
 
 const FIND_BY_ID_STATEMENT = db.query.Suggestion.findMany({
 	where: eq(DbSuggestion.id, sql.placeholder("id")),
-	with: {
-		votes: true,
-	},
 }).prepare();
 
 export class SuggestionManager {

@@ -1,14 +1,5 @@
 import { sqliteTable, text, int } from "drizzle-orm/sqlite-core";
-import {
-	sql,
-	type InferInsertModel,
-	type InferSelectModel,
-	relations,
-} from "drizzle-orm";
-import {
-	SuggestionVotes,
-	type SuggestionVotesSelect,
-} from "./suggestionVotes.ts";
+import { sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
 export const SUGGESTION_STATUS = {
 	POSTED: "POSTED",
@@ -54,12 +45,5 @@ export const Suggestion = sqliteTable("suggestion", {
 		.notNull(),
 });
 
-export const SuggestionRelations = relations(Suggestion, ({ many }) => ({
-	votes: many(SuggestionVotes),
-}));
-
 export type SuggestionSelect = InferSelectModel<typeof Suggestion>;
-export type SuggestionSelectWithVotes = InferSelectModel<typeof Suggestion> & {
-	votes: SuggestionVotesSelect[];
-};
 export type SuggestionInsert = InferInsertModel<typeof Suggestion>;
