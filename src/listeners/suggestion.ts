@@ -17,7 +17,7 @@ import {
 import { UserError, handleUserError } from "../errors.ts";
 import type {
 	SuggestionStatus,
-	SuggestionStatusWithoutPosted,
+	UpdatedSuggestionStatus,
 } from "../schemas/suggestion.ts";
 import { SuggestionUtil } from "../structures/suggestionUtil.ts";
 
@@ -68,7 +68,7 @@ export default [
 
 			const status = getKeyByValue(
 				SuggestionUtil.BUTTON_ID,
-				interaction.customId as SuggestionStatusWithoutPosted,
+				interaction.customId as UpdatedSuggestionStatus,
 			) as SuggestionStatus | undefined;
 
 			if (!status)

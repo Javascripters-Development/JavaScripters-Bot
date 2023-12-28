@@ -9,7 +9,7 @@ export const SUGGESTION_STATUS = {
 
 export type SuggestionStatus =
 	typeof SUGGESTION_STATUS[keyof typeof SUGGESTION_STATUS];
-export type SuggestionStatusWithoutPosted = Exclude<SuggestionStatus, "POSTED">;
+export type UpdatedSuggestionStatus = Exclude<SuggestionStatus, "POSTED">;
 
 const SUGGESTION_STATUS_VALUES = Object.values(SUGGESTION_STATUS) as [
 	"POSTED",

@@ -14,7 +14,7 @@ import {
 } from "discord.js";
 import type {
 	SuggestionStatus,
-	SuggestionStatusWithoutPosted,
+	UpdatedSuggestionStatus,
 } from "../schemas/suggestion.ts";
 import type { Suggestion } from "./suggestion.ts";
 import type { ConfigSelect } from "../schemas/config.ts";
@@ -30,7 +30,7 @@ export const SuggestionUtil = {
 			ACCEPTED: "suggestion-accept",
 			REJECTED: "suggestion-reject",
 		} as const satisfies {
-			[Key in SuggestionStatusWithoutPosted]: string;
+			[Key in UpdatedSuggestionStatus]: string;
 		};
 	},
 
@@ -55,7 +55,7 @@ export const SuggestionUtil = {
 			ACCEPTED: ButtonStyle.Success,
 			REJECTED: ButtonStyle.Danger,
 		} as const satisfies {
-			[Key in SuggestionStatusWithoutPosted]: ButtonStyle;
+			[Key in UpdatedSuggestionStatus]: ButtonStyle;
 		};
 	},
 
@@ -107,7 +107,7 @@ export const SuggestionUtil = {
 			footer: { text: `ID: ${suggestion.id}` },
 		});
 
-		const getButtonBuilder = (status: SuggestionStatusWithoutPosted) =>
+		const getButtonBuilder = (status: UpdatedSuggestionStatus) =>
 			new ButtonBuilder({
 				// rome-ignore lint/style/noNonNullAssertion: status has to be valid
 				label: capitalizeFirstLetter(this.getStatusVerb(status)!),
