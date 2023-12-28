@@ -10,7 +10,6 @@ import {
 	ActionRowBuilder,
 	type Interaction,
 	ButtonInteraction,
-	Message,
 } from "discord.js";
 import type {
 	SuggestionStatus,
@@ -19,7 +18,6 @@ import type {
 import type { DiscordSuggestion } from "./discord-suggestion.ts";
 import type { ConfigSelect } from "../schemas/config.ts";
 import { capitalizeFirstLetter } from "../utils.ts";
-import { SuggestionManager } from "./managers/suggestionManager.ts";
 
 export type SuggestionButtonId =
 	typeof SuggestionUtil.BUTTON_ID[keyof typeof SuggestionUtil.BUTTON_ID];
@@ -172,20 +170,6 @@ export const SuggestionUtil = {
 				interaction.customId as typeof this.VOTE_BUTTON_ID[keyof typeof this.VOTE_BUTTON_ID],
 			)
 		);
-	},
-
-	/** Get the {@link DiscordSuggestion} from the {@link Message} instance. */
-	getInstanceFromMessage(message: Message): Promise<DiscordSuggestion> {
-		const idRegex = /ID: (\d+)/i;
-		const firstEmbed = message.embeds.at(0);
-		const extractedId = firstEmbed?.footer?.text.match(idRegex)?.at(1);
-
-		if (!extractedId)
-			throw new Error(
-				`Could not extract suggestion ID from message ${message.url}`,
-			);
-
-		return SuggestionManager.getFromId(parseInt(extractedId));
 	},
 
 	/** Update the suggestion message. */
