@@ -20,6 +20,7 @@ import type {
 	UpdatedSuggestionStatus,
 } from "../schemas/suggestion.ts";
 import { SuggestionUtil } from "../structures/suggestionUtil.ts";
+import { SuggestionManager } from "../structures/managers/suggestionManager.ts";
 
 const MODAL_ID = "suggestion-modal";
 const MODAL_INPUT_ID = "suggestion-reason";
@@ -62,7 +63,7 @@ export default [
 				);
 			}
 
-			const suggestion = await SuggestionUtil.getInstanceFromMessage(
+			const suggestion = await SuggestionManager.getFromMessage(
 				interaction.message,
 			);
 
@@ -133,7 +134,7 @@ export default [
 				return;
 
 			const config = getConfig.get({ guildId: interaction.guildId });
-			const suggestion = await SuggestionUtil.getInstanceFromMessage(
+			const suggestion = await SuggestionManager.getFromMessage(
 				interaction.message,
 			);
 
