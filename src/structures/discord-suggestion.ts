@@ -7,7 +7,7 @@ import { Suggestion as DbSuggestion } from "../schemas/suggestion.ts";
 import db from "../db.ts";
 import { SuggestionManager } from "./managers/suggestionManager.ts";
 import type { ConfigSelect } from "../schemas/config.ts";
-import { SuggestionUtil } from "./suggestionUtil.ts";
+import { SuggestionUtil } from "./suggestion-util.ts";
 import { Suggestion } from "./suggestion.ts";
 
 export const SUGGESTION_USER_ALREADY_VOTED = "UserAlreadyVoted";

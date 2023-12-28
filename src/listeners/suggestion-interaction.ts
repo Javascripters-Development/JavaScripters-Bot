@@ -19,7 +19,7 @@ import type {
 	SuggestionStatus,
 	UpdatedSuggestionStatus,
 } from "../schemas/suggestion.ts";
-import { SuggestionUtil } from "../structures/suggestionUtil.ts";
+import { SuggestionUtil } from "../structures/suggestion-util.ts";
 import { SuggestionManager } from "../structures/managers/suggestionManager.ts";
 
 const MODAL_ID = "suggestion-modal";
