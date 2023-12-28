@@ -5,7 +5,7 @@ import {
 	TextInputStyle,
 	inlineCode,
 } from "discord.js";
-import { Suggestion } from "../structures/suggestion.ts";
+import { DiscordSuggestion } from "../structures/discord-suggestion.ts";
 import type { Listener } from "../types/listener.ts";
 import {
 	Time,
@@ -81,7 +81,7 @@ export default [
 				.setStyle(TextInputStyle.Paragraph)
 				.setLabel("What's the reason?")
 				.setPlaceholder("Leave empty if no reason necessary...")
-				.setMaxLength(Suggestion.MAX_REASON_LENGTH)
+				.setMaxLength(DiscordSuggestion.MAX_REASON_LENGTH)
 				.setRequired(false);
 			const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
 				textInput,

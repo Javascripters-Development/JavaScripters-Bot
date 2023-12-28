@@ -30,7 +30,7 @@ interface CreateSuggestionOptions {
 	dbConfig?: ConfigSelect;
 }
 
-export class Suggestion extends Votable<Snowflake> {
+export class DiscordSuggestion extends Votable<Snowflake> {
 	/** The maximum length for the suggestion title. */
 	public static readonly MAX_TITLE_LENGTH = 100;
 

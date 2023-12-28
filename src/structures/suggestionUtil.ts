@@ -16,7 +16,7 @@ import type {
 	SuggestionStatus,
 	UpdatedSuggestionStatus,
 } from "../schemas/suggestion.ts";
-import type { Suggestion } from "./suggestion.ts";
+import type { DiscordSuggestion } from "./discord-suggestion.ts";
 import type { ConfigSelect } from "../schemas/config.ts";
 import { capitalizeFirstLetter } from "../utils.ts";
 import { SuggestionManager } from "./managers/suggestionManager.ts";
@@ -70,7 +70,7 @@ export const SuggestionUtil = {
 	},
 
 	async getMessageOptions(
-		suggestion: Suggestion,
+		suggestion: DiscordSuggestion,
 		dbConfig?: ConfigSelect,
 	): Promise<BaseMessageOptions> {
 		const { title, description, status, statusReason } = suggestion;
@@ -171,7 +171,7 @@ export const SuggestionUtil = {
 		);
 	},
 
-	getInstanceFromMessage(message: Message): Promise<Suggestion> {
+	getInstanceFromMessage(message: Message): Promise<DiscordSuggestion> {
 		const idRegex = /ID: (\d+)/i;
 		const firstEmbed = message.embeds.at(0);
 		const extractedId = firstEmbed?.footer?.text.match(idRegex)?.at(1);
@@ -185,7 +185,7 @@ export const SuggestionUtil = {
 	},
 
 	async updateMessage(
-		suggestion: Suggestion,
+		suggestion: DiscordSuggestion,
 		dbConfig?: ConfigSelect,
 	): Promise<void> {
 		const suggestionMessage = await suggestion.getMessage();

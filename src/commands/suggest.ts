@@ -6,7 +6,7 @@ import {
 import type { Command } from "djs-fsrouter";
 import { getConfig, hyperlink } from "../utils.ts";
 import { handleUserError } from "../errors.ts";
-import { Suggestion } from "../structures/suggestion.ts";
+import { DiscordSuggestion } from "../structures/discord-suggestion.ts";
 
 export const type = ApplicationCommandType.ChatInput;
 
@@ -19,13 +19,13 @@ const Suggest: Command = {
 			name: "title",
 			description: "The title of the suggestion",
 			required: true,
-			maxLength: Suggestion.MAX_TITLE_LENGTH,
+			maxLength: DiscordSuggestion.MAX_TITLE_LENGTH,
 		},
 		{
 			type: ApplicationCommandOptionType.String,
 			name: "description",
 			description: "The description of the suggestion",
-			maxLength: Suggestion.MAX_DESCRIPTION_LENGTH,
+			maxLength: DiscordSuggestion.MAX_DESCRIPTION_LENGTH,
 		},
 	],
 	async run(interaction) {
@@ -53,7 +53,7 @@ const Suggest: Command = {
 			config.suggestionChannel,
 		)) as GuildTextBasedChannel;
 
-		const suggestion = await Suggestion.create({
+		const suggestion = await DiscordSuggestion.create({
 			title: interaction.options.getString("title", true),
 			description: interaction.options.getString("description") ?? undefined,
 			member: interaction.member,
