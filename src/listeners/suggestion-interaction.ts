@@ -26,6 +26,7 @@ const MODAL_ID = "suggestion-modal";
 const MODAL_INPUT_ID = "suggestion-reason";
 
 export default [
+	// Handle status update interaction
 	{
 		event: "interactionCreate",
 		async handler(interaction) {
@@ -120,6 +121,7 @@ export default [
 			});
 		},
 	},
+	// Handle suggestion vote interaction
 	{
 		event: "interactionCreate",
 		async handler(interaction) {
