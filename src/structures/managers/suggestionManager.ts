@@ -12,26 +12,25 @@ const FIND_BY_MESSAGE_STATEMENT = db.query.Suggestion.findMany({
 	where: and(eq(DbSuggestion.channelId, sql.placeholder("channelId")), eq(DbSuggestion.messageId, sql.placeholder("messageId"))),
 }).prepare();
 
-export class SuggestionManager {
-	/** Get a {@link DiscordSuggestion} by its ID. */
-	public static async getFromId(id: number): Promise<DiscordSuggestion> {
-		const foundSuggestion = (await FIND_BY_ID_STATEMENT.all({ id })).at(0);
+/** Get a {@link DiscordSuggestion} by its ID. */
+export const getFromId = async (id: number): Promise<DiscordSuggestion> => {
+	const foundSuggestion = (await FIND_BY_ID_STATEMENT.all({ id })).at(0);
 
-		if (!foundSuggestion)
-			throw new Error(`Could not fetch suggestion with ID ${id}`);
+	if (!foundSuggestion)
+		throw new Error(`Could not fetch suggestion with ID ${id}`);
 
-		return new DiscordSuggestion(foundSuggestion);
-	}
-
-	/** Get a {@link DiscordSuggestion} from the associated {@link Message}. */
-	public static async getFromMessage({ id, channelId, url }: Message): Promise<DiscordSuggestion> {
-		const foundSuggestion = (await FIND_BY_MESSAGE_STATEMENT.all({ channelId: channelId, messageId: id })).at(0);
-
-		if (!foundSuggestion)
-			throw new Error(
-				`Could not find a suggestion associated with message ${url}`,
-			);
-
-		return new DiscordSuggestion(foundSuggestion);
-	}
+	return new DiscordSuggestion(foundSuggestion.id);
 }
+
+/** Get a {@link DiscordSuggestion} from the associated {@link Message}. */
+export const getFromMessage = async ({ id, channelId, url }: Message): Promise<DiscordSuggestion> => {
+	const foundSuggestion = (await FIND_BY_MESSAGE_STATEMENT.all({ channelId: channelId, messageId: id })).at(0);
+
+	if (!foundSuggestion)
+		throw new Error(
+			`Could not find a suggestion associated with message ${url}`,
+		);
+
+	return new DiscordSuggestion(foundSuggestion.id);
+}
+
