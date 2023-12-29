@@ -229,8 +229,8 @@ export const SuggestionUtil = {
 		await suggestionMessage.edit(messageOptions);
 
 		// Lock thread if suggestion is accepted/rejected
-		if (suggestion.status !== 'POSTED' && !suggestionMessage.thread?.locked) {
-			await suggestionMessage.thread?.setLocked(
+		if (suggestion.status !== 'POSTED' && suggestionMessage.thread && !suggestionMessage.thread.locked) {
+			await suggestionMessage.thread.setLocked(
 				true,
 				"Suggestion got accepted or rejected",
 			);

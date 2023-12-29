@@ -142,7 +142,7 @@ export class Suggestion extends Votable<Snowflake> {
             .set({
                 statusUserId: user.id,
                 status,
-                statusReason: reason,
+                statusReason: reason ?? null,
                 updatedAt: new Date(),
             })
             .returning()
