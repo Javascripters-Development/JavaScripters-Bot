@@ -50,12 +50,12 @@ export class Suggestion extends Votable<Snowflake> {
 	}
 
 	/** Upvote the suggestion. */
-	public override async upvote(userId: string): Promise<void> {
+	public override async upvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
 		if (await this.canVote()) return;
 
 		super.upvote(userId);
 
-		const dbSuggestion = await db
+		const dbSuggestion = db
 			.select({
 				downvotedBy: DbSuggestion.downvotedBy,
 				upvotedBy: DbSuggestion.upvotedBy,
@@ -73,22 +73,26 @@ export class Suggestion extends Votable<Snowflake> {
 		const serializedUpvotes = [...upvotes].join(Suggestion.VOTE_SERIALIZE_SEPARATOR) || null;
 		const serializedDownvotes = [...downvotes].join(Suggestion.VOTE_SERIALIZE_SEPARATOR) || null;
 
-		await db
+		const updatedSuggestion = await db
 			.update(DbSuggestion)
 			.set({
 				upvotedBy: serializedUpvotes,
 				downvotedBy: serializedDownvotes,
 			})
-			.where(eq(DbSuggestion.id, this.id));
+			.where(eq(DbSuggestion.id, this.id))
+			.returning()
+			.then(updated => updated[0]);
+
+		this.updateMessage(dbConfig, updatedSuggestion)
 	}
 
 	/** Downvote the suggestion. */
-	public override async downvote(userId: string): Promise<void> {
+	public override async downvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
 		if (await this.canVote()) return;
 
 		super.downvote(userId);
 
-		const dbSuggestion = await db
+		const dbSuggestion = db
 			.select({
 				downvotedBy: DbSuggestion.downvotedBy,
 				upvotedBy: DbSuggestion.upvotedBy,
@@ -106,19 +110,51 @@ export class Suggestion extends Votable<Snowflake> {
 		const serializedUpvotes = [...upvotes].join(Suggestion.VOTE_SERIALIZE_SEPARATOR) || null;
 		const serializedDownvotes = [...downvotes].join(Suggestion.VOTE_SERIALIZE_SEPARATOR) || null;
 
-		await db
+		const updatedSuggestion = await db
 			.update(DbSuggestion)
 			.set({
 				upvotedBy: serializedUpvotes,
 				downvotedBy: serializedDownvotes,
 			})
-			.where(eq(DbSuggestion.id, this.id));
+			.where(eq(DbSuggestion.id, this.id))
+			.returning()
+			.then(updated => updated[0]);
+
+		this.updateMessage(dbConfig, updatedSuggestion)
 	}
 
 	/** Remove the user's vote for the suggestion. */
-	public override async removeVote(userId: string): Promise<void> {
-		await db.delete(DbSuggestion).where(eq(DbSuggestion.id, this.id));
+	public override async removeVote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
+		const dbSuggestion = db
+			.select({
+				downvotedBy: DbSuggestion.downvotedBy,
+				upvotedBy: DbSuggestion.upvotedBy,
+			})
+			.from(DbSuggestion)
+			.where(eq(DbSuggestion.id, this.id))
+			.get();
+
+		if (!dbSuggestion) return
+
+		const upvotedByUserIds = dbSuggestion.upvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []
+		const downvotedByUserIds = dbSuggestion.downvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []
+
+		const updatedUpvotedBy = upvotedByUserIds.filter(voteUserId => voteUserId !== userId).join(Suggestion.VOTE_SERIALIZE_SEPARATOR)
+		const updatedDownvotedBy = downvotedByUserIds.filter(voteUserId => voteUserId !== userId).join(Suggestion.VOTE_SERIALIZE_SEPARATOR)
+
+		const updatedSuggestion = await db
+			.update(DbSuggestion)
+			.set({
+				upvotedBy: updatedUpvotedBy,
+				downvotedBy: updatedDownvotedBy,
+			})
+			.where(eq(DbSuggestion.id, this.id))
+			.returning()
+			.then(updated => updated[0]);
+
 		super.removeVote(userId);
+
+		this.updateMessage(dbConfig, updatedSuggestion)
 	}
 
     /** Check if the suggestion can be voted on. */
@@ -137,8 +173,9 @@ export class Suggestion extends Votable<Snowflake> {
 		user: User,
 		status: SuggestionStatus,
 		reason?: string,
-	): Promise<SuggestionSelect> {
-		return db
+		dbConfig?: ConfigSelect
+	): Promise<void> {
+		const updatedSuggestion = await db
             .update(DbSuggestion)
             .set({
                 statusUserId: user.id,
@@ -146,12 +183,15 @@ export class Suggestion extends Votable<Snowflake> {
                 statusReason: reason ?? null,
                 updatedAt: new Date(),
             })
+			.where(eq(DbSuggestion.id, this.id))
             .returning()
             .then(updated => updated[0]);
+
+		this.updateMessage(dbConfig, updatedSuggestion)
 	}
 
 	/** Update the suggestion's message */
-	public async updateMessage(dbConfig?: ConfigSelect, dbSuggestion?: SuggestionSelect) {
+	protected async updateMessage(dbConfig?: ConfigSelect, dbSuggestion?: SuggestionSelect) {
 		const _dbSuggestion = dbSuggestion
 			? dbSuggestion
 			: db
@@ -184,15 +224,9 @@ export class Suggestion extends Votable<Snowflake> {
 		}
 	}
 
-    /** Fetch the suggestion from the database. */
-    async fetch() {
-        return db
-			.select()
-			.from(DbSuggestion)
-			.where(eq(DbSuggestion.id, this.id))
-			.all()
-			.at(0);
-    }
+	toString() {
+		return `Suggestion { id: ${this.id} }`
+	}
 
     /** Create a new suggestion. */
 	public static async create({

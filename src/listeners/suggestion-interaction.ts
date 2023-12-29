@@ -18,7 +18,7 @@ import type {
 	SuggestionStatus,
 	UpdatedSuggestionStatus,
 } from "../schemas/suggestion.ts";
-import { SuggestionUtil, getSuggestionFromMessage } from "../structures/suggestion-util.ts";
+import { SuggestionUtil, getSuggestionFromMessage, type SuggestionButtonId } from "../structures/suggestion-util.ts";
 import { Suggestion } from "../structures/suggestion.ts";
 
 const MODAL_ID = "suggestion-modal";
@@ -104,18 +104,17 @@ export default [
 			const inputReason =
 				modalInteraction.fields.getTextInputValue(MODAL_INPUT_ID);
 
-			const updatedSuggestion = await suggestion.setStatus(
+			await suggestion.setStatus(
 				modalInteraction.user,
 				status,
 				inputReason || undefined,
+				config
 			);
 
-			await suggestion.updateMessage(config, updatedSuggestion);
+			const statusString = SuggestionUtil.BUTTON_ID_STATUS_MAP[interaction.customId as SuggestionButtonId]
+
 			await modalInteraction.reply({
-				content: `You set the status of ${hyperlink(
-					"this suggestion",
-					interaction.message.url,
-				)} to ${inlineCode(updatedSuggestion.status.toLowerCase())}`,
+				content: `You set the status of ${hyperlink("this suggestion", interaction.message.url)} to ${inlineCode(statusString.toLowerCase())}`,
 				ephemeral: true,
 			});
 		},
@@ -141,7 +140,7 @@ export default [
 
 			if (interaction.customId === SuggestionUtil.VOTE_BUTTON_ID.UPVOTE) {
 				try {
-					await suggestion.upvote(interaction.user.id);
+					await suggestion.upvote(interaction.user.id, config);
 					await interaction.reply({
 						content: `Successfully upvoted ${hyperlink(
 							"this",
@@ -159,7 +158,7 @@ export default [
 				}
 			} else {
 				try {
-					await suggestion.downvote(interaction.user.id);
+					await suggestion.downvote(interaction.user.id, config);
 					await interaction.reply({
 						content: `Successfully downvoted ${hyperlink(
 							"this",
@@ -176,13 +175,6 @@ export default [
 					);
 				}
 			}
-
-			const dbSuggestion = await suggestion.fetch()
-
-			if (dbSuggestion === undefined)
-				throw new Error('Suggestion does not exist')
-
-			await suggestion.updateMessage(config, dbSuggestion);
 		},
 	},
 ] as Listener[];
