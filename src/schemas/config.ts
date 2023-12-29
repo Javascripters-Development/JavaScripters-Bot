@@ -1,5 +1,6 @@
 import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+
 export const Config = sqliteTable("guildConfig", {
 	id: text("guildId").primaryKey().notNull(),
 	gatewayChannel: text("gatewayChannel"),
@@ -15,5 +16,6 @@ export const Config = sqliteTable("guildConfig", {
 	suggestionUpvoteEmoji: text("suggestionUpvoteEmoji",).default('👍'),
 	suggestionDownvoteEmoji: text("suggestionDownvoteEmoji").default('👎'),
 });
+
 export type ConfigSelect = InferSelectModel<typeof Config>;
 export type ConfigInsert = InferInsertModel<typeof Config>;

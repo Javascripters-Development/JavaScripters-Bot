@@ -1,6 +1,7 @@
 import { sqliteTable, text, int } from "drizzle-orm/sqlite-core";
 import { sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 import { stringSet } from "../utils/drizzle.ts";
+import { Config } from "./config.ts";
 
 export const SUGGESTION_STATUS = {
 	POSTED: "POSTED",
@@ -24,7 +25,7 @@ export const Suggestion = sqliteTable("suggestion", {
 	title: text("title").notNull(),
 	description: text("description"),
 
-	guildId: text("guildId").notNull(),
+	guildId: text("guildId").references(() => Config.id, { onDelete: 'cascade' }).notNull(),
 	channelId: text("channelId").notNull(),
 	messageId: text("messageId").notNull(),
 	userId: text("userId").notNull(),
