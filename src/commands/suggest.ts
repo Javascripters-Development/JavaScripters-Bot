@@ -5,7 +5,6 @@ import {
 } from "discord.js";
 import type { Command } from "djs-fsrouter";
 import { getConfig, hyperlink } from "../utils.ts";
-import { handleUserError } from "../errors.ts";
 import { Suggestion } from "../structures/suggestion.ts";
 
 export const type = ApplicationCommandType.ChatInput;
@@ -43,10 +42,10 @@ const Suggest: Command = {
 		const config = getConfig.get({ guildId: interaction.guildId });
 
 		if (!config?.suggestionChannel) {
-			return handleUserError(
-				interaction,
-				"There is no suggestion channel configured for this server",
-			);
+			return interaction.reply({
+				content: "There is no suggestion channel configured for this server",
+				ephemeral: true,
+			});
 		}
 
 		const suggestionChannel = (await interaction.guild.channels.fetch(
