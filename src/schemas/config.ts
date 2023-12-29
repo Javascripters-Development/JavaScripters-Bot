@@ -12,8 +12,8 @@ export const Config = sqliteTable("guildConfig", {
 
 	suggestionChannel: text("suggestionChannel"),
 	suggestionManagerRole: text("suggestionManagerRole"),
-	suggestionUpvoteEmoji: text("suggestionUpvoteEmoji"),
-	suggestionDownvoteEmoji: text("suggestionDownvoteEmoji"),
+	suggestionUpvoteEmoji: text("suggestionUpvoteEmoji",).default('👍'),
+	suggestionDownvoteEmoji: text("suggestionDownvoteEmoji").default('👎'),
 });
 export type ConfigSelect = InferSelectModel<typeof Config>;
 export type ConfigInsert = InferInsertModel<typeof Config>;
