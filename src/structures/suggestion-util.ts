@@ -35,6 +35,7 @@ const FIND_BY_MESSAGE_STATEMENT = db.query.Suggestion.findMany({
 
 /** Get a {@link DiscordSuggestion} by its ID. */
 export const getSuggestionFromId = async (id: number): Promise<Suggestion> => {
+	// TEMP: use .all() and select the first row manually, .get() does not work
 	const foundSuggestion = (await FIND_BY_ID_STATEMENT.all({ id })).at(0);
 
 	if (!foundSuggestion)
@@ -45,6 +46,7 @@ export const getSuggestionFromId = async (id: number): Promise<Suggestion> => {
 
 /** Get a {@link DiscordSuggestion} from the associated {@link Message}. */
 export const getSuggestionFromMessage = async ({ id, channelId, url }: Message): Promise<Suggestion> => {
+	// TEMP: use .all() and select the first row manually, .get() does not work
 	const foundSuggestion = (await FIND_BY_MESSAGE_STATEMENT.all({ channelId: channelId, messageId: id })).at(0);
 
 	if (!foundSuggestion)
