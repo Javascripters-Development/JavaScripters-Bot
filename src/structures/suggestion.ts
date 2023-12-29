@@ -8,7 +8,8 @@ import {
 import db from "../db.ts";
 import { eq } from "drizzle-orm";
 import type { ConfigSelect } from "../schemas/config.ts";
-import { SuggestionUtil, getSuggestionFromId } from "./suggestion-util.ts";
+import { SuggestionUtil } from "./suggestion-util.ts";
+import { client } from "../client.ts";
 
 export const SUGGESTION_USER_ALREADY_VOTED = "UserAlreadyVoted";
 
@@ -147,6 +148,40 @@ export class Suggestion extends Votable<Snowflake> {
             })
             .returning()
             .then(updated => updated[0]);
+	}
+
+	/** Update the suggestion's message */
+	public async updateMessage(dbConfig?: ConfigSelect, dbSuggestion?: SuggestionSelect) {
+		const _dbSuggestion = dbSuggestion
+			? dbSuggestion
+			: db
+				.select()
+				.from(DbSuggestion)
+				.where(eq(DbSuggestion.id, this.id))
+				.all()
+				.at(0)
+
+		if (!_dbSuggestion) return
+
+		const channel = await client.channels.fetch(_dbSuggestion.channelId)
+		const suggestionMessage = channel?.isTextBased() ? await channel?.messages.fetch(_dbSuggestion.messageId) : null
+		const messageOptions = await SuggestionUtil.getMessageOptions(_dbSuggestion, dbConfig);
+
+		// Ensure the message can be edited
+		if (!suggestionMessage?.editable) return;
+
+		await suggestionMessage.edit(messageOptions);
+
+		const hasUpdatedStatus = _dbSuggestion.status !== 'POSTED'
+		const isThreadUnlocked = suggestionMessage?.thread && !suggestionMessage?.thread.locked
+
+		// Lock thread if suggestion is accepted/rejected
+		if (hasUpdatedStatus && isThreadUnlocked) {
+			await suggestionMessage.thread.setLocked(
+				true,
+				"Suggestion got accepted or rejected",
+			);
+		}
 	}
 
     /** Fetch the suggestion from the database. */

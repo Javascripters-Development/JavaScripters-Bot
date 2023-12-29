@@ -110,7 +110,7 @@ export default [
 				inputReason || undefined,
 			);
 
-			await SuggestionUtil.updateMessage(updatedSuggestion, config);
+			await suggestion.updateMessage(config, updatedSuggestion);
 			await modalInteraction.reply({
 				content: `You set the status of ${hyperlink(
 					"this suggestion",
@@ -182,7 +182,7 @@ export default [
 			if (dbSuggestion === undefined)
 				throw new Error('Suggestion does not exist')
 
-			await SuggestionUtil.updateMessage(dbSuggestion, config);
+			await suggestion.updateMessage(config, dbSuggestion);
 		},
 	},
 ] as Listener[];

@@ -212,28 +212,5 @@ export const SuggestionUtil = {
 				interaction.customId as typeof this.VOTE_BUTTON_ID[keyof typeof this.VOTE_BUTTON_ID],
 			)
 		);
-	},
-
-	/** Update the suggestion message. */
-	async updateMessage(
-		suggestion: SuggestionSelect,
-		dbConfig?: ConfigSelect,
-	): Promise<void> {
-		const channel = await client.channels.fetch(suggestion.channelId)
-		const suggestionMessage = channel?.isTextBased() ? await channel?.messages.fetch(suggestion.messageId) : null
-		const messageOptions = await this.getMessageOptions(suggestion, dbConfig);
-
-		// Ensure the message can be edited
-		if (!suggestionMessage?.editable) return;
-
-		await suggestionMessage.edit(messageOptions);
-
-		// Lock thread if suggestion is accepted/rejected
-		if (suggestion.status !== 'POSTED' && suggestionMessage.thread && !suggestionMessage.thread.locked) {
-			await suggestionMessage.thread.setLocked(
-				true,
-				"Suggestion got accepted or rejected",
-			);
-		}
-	},
+	}
 };
