@@ -1,5 +1,4 @@
 import type { Awaitable } from "discord.js";
-import { UserError } from "../errors.ts";
 
 export const VOTABLE_ALREADY_VOTED = "AlreadyVoted";
 
@@ -24,10 +23,6 @@ export class Votable<T> {
 	protected async upvote(identifier: T): Promise<void> {
 		if (!await this.canVote()) return
 
-		if (this._votes.get(identifier) === true) {
-			throw new UserError("Already upvoted", VOTABLE_ALREADY_VOTED);
-		}
-
 		this._votes.set(identifier, true);
 	}
 
@@ -38,10 +33,6 @@ export class Votable<T> {
 	 */
 	protected async downvote(identifier: T): Promise<void> {
 		if (!await this.canVote()) return
-
-		if (this._votes.get(identifier) === false) {
-			throw new UserError("Already downvoted", VOTABLE_ALREADY_VOTED);
-		}
 
 		this._votes.set(identifier, false);
 	}
