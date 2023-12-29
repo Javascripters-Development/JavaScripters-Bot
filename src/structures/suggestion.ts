@@ -64,20 +64,17 @@ export class Suggestion extends Votable<Snowflake> {
 			.where(eq(DbSuggestion.id, this.id))
 			.get();
 
-		const upvotes = new Set(dbSuggestion?.upvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []);
-		const downvotes = new Set(dbSuggestion?.downvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []);
+		const upvotes = new Set(dbSuggestion?.upvotedBy);
+		const downvotes = new Set(dbSuggestion?.downvotedBy);
 
 		upvotes.add(userId);
 		downvotes.delete(userId);
 
-		const serializedUpvotes = [...upvotes].join(Suggestion.VOTE_SERIALIZE_SEPARATOR) || null;
-		const serializedDownvotes = [...downvotes].join(Suggestion.VOTE_SERIALIZE_SEPARATOR) || null;
-
 		const updatedSuggestion = await db
 			.update(DbSuggestion)
 			.set({
-				upvotedBy: serializedUpvotes,
-				downvotedBy: serializedDownvotes,
+				upvotedBy: upvotes,
+				downvotedBy: downvotes,
 			})
 			.where(eq(DbSuggestion.id, this.id))
 			.returning()
@@ -101,20 +98,17 @@ export class Suggestion extends Votable<Snowflake> {
 			.where(eq(DbSuggestion.id, this.id))
 			.get();
 
-		const upvotes = new Set(dbSuggestion?.upvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []);
-		const downvotes = new Set(dbSuggestion?.downvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []);
+		const upvotes = new Set(dbSuggestion?.upvotedBy);
+		const downvotes = new Set(dbSuggestion?.downvotedBy);
 
 		upvotes.delete(userId);
 		downvotes.add(userId);
 
-		const serializedUpvotes = [...upvotes].join(Suggestion.VOTE_SERIALIZE_SEPARATOR) || null;
-		const serializedDownvotes = [...downvotes].join(Suggestion.VOTE_SERIALIZE_SEPARATOR) || null;
-
 		const updatedSuggestion = await db
 			.update(DbSuggestion)
 			.set({
-				upvotedBy: serializedUpvotes,
-				downvotedBy: serializedDownvotes,
+				upvotedBy: upvotes,
+				downvotedBy: downvotes,
 			})
 			.where(eq(DbSuggestion.id, this.id))
 			.returning()
@@ -136,17 +130,15 @@ export class Suggestion extends Votable<Snowflake> {
 
 		if (!dbSuggestion) return
 
-		const upvotedByUserIds = dbSuggestion.upvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []
-		const downvotedByUserIds = dbSuggestion.downvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []
 
-		const updatedUpvotedBy = upvotedByUserIds.filter(voteUserId => voteUserId !== userId).join(Suggestion.VOTE_SERIALIZE_SEPARATOR)
-		const updatedDownvotedBy = downvotedByUserIds.filter(voteUserId => voteUserId !== userId).join(Suggestion.VOTE_SERIALIZE_SEPARATOR)
+		const upvotes = new Set([...dbSuggestion.upvotedBy ?? []].filter(voteUserId => voteUserId !== userId))
+		const downvotes = new Set([...dbSuggestion.downvotedBy ?? []].filter(voteUserId => voteUserId !== userId))
 
 		const updatedSuggestion = await db
 			.update(DbSuggestion)
 			.set({
-				upvotedBy: updatedUpvotedBy,
-				downvotedBy: updatedDownvotedBy,
+				upvotedBy: upvotes,
+				downvotedBy: downvotes,
 			})
 			.where(eq(DbSuggestion.id, this.id))
 			.returning()

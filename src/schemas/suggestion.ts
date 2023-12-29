@@ -1,5 +1,6 @@
 import { sqliteTable, text, int } from "drizzle-orm/sqlite-core";
 import { sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import { stringSet } from "../utils/drizzle.ts";
 
 export const SUGGESTION_STATUS = {
 	POSTED: "POSTED",
@@ -34,8 +35,8 @@ export const Suggestion = sqliteTable("suggestion", {
 	statusReason: text("statusReason"),
 	statusUserId: text("statusUserId"),
 
-	upvotedBy: text("upvotedBy"),
-	downvotedBy: text("downvotedBy"),
+	upvotedBy: stringSet("upvotedBy"),
+	downvotedBy: stringSet("downvotedBy"),
 
 	updatedAt: int("updatedAt", { mode: "timestamp" })
 		.default(sql`(strftime('%s', 'now'))`)

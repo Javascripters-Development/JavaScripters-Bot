@@ -110,9 +110,6 @@ export const SuggestionUtil = {
 		dbConfig?: ConfigSelect,
 	): Promise<BaseMessageOptions> {
 		const { title, description, status, statusReason, userId, statusUserId, upvotedBy, downvotedBy } = suggestion;
-		
-		const upvotedByUserIds = upvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []
-		const downvotedByUserIds = downvotedBy?.split(Suggestion.VOTE_SERIALIZE_SEPARATOR) ?? []
 
 		const user = await client.users.fetch(userId);
 		const statusUser = statusUserId ? await client.users.fetch(statusUserId) : null;
@@ -169,14 +166,14 @@ export const SuggestionUtil = {
 				new ActionRowBuilder<ButtonBuilder>({
 					components: [
 						new ButtonBuilder({
-							label: upvotedByUserIds.length.toString(),
+							label: (upvotedBy ?? new Set()).size.toString(),
 							emoji: dbConfig?.suggestionUpvoteEmoji ?? "👍",
 							customId: this.VOTE_BUTTON_ID.UPVOTE,
 							style: ButtonStyle.Primary,
 							disabled: hasUpdatedStatus,
 						}),
 						new ButtonBuilder({
-							label: downvotedByUserIds.length.toString(),
+							label: (downvotedBy ?? new Set()).size.toString(),
 							emoji: dbConfig?.suggestionDownvoteEmoji ?? "👎",
 							customId: this.VOTE_BUTTON_ID.DOWNVOTE,
 							style: ButtonStyle.Primary,
