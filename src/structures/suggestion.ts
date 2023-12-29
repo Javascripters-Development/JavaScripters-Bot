@@ -155,7 +155,8 @@ export class Suggestion extends Votable<Snowflake> {
 			.select()
 			.from(DbSuggestion)
 			.where(eq(DbSuggestion.id, this.id))
-			.get();
+			.all()
+			.at(0);
     }
 
     /** Create a new suggestion. */
