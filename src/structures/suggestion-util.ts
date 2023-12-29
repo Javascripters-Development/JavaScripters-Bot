@@ -10,16 +10,50 @@ import {
 	ActionRowBuilder,
 	type Interaction,
 	ButtonInteraction,
+	Message,
 } from "discord.js";
-import type {
-	SuggestionSelect,
-	SuggestionStatus,
-	UpdatedSuggestionStatus,
+import {
+	type SuggestionSelect,
+	type SuggestionStatus,
+	type UpdatedSuggestionStatus,
+	Suggestion as DbSuggestion
 } from "../schemas/suggestion.ts";
 import type { ConfigSelect } from "../schemas/config.ts";
 import { capitalizeFirstLetter } from "../utils.ts";
 import { client } from "../client.ts";
 import { Suggestion } from "./suggestion.ts";
+import db from "../db.ts";
+import { and, eq, sql } from "drizzle-orm";
+
+const FIND_BY_ID_STATEMENT = db.query.Suggestion.findMany({
+	where: eq(DbSuggestion.id, sql.placeholder("id")),
+}).prepare();
+
+const FIND_BY_MESSAGE_STATEMENT = db.query.Suggestion.findMany({
+	where: and(eq(DbSuggestion.channelId, sql.placeholder("channelId")), eq(DbSuggestion.messageId, sql.placeholder("messageId"))),
+}).prepare();
+
+/** Get a {@link DiscordSuggestion} by its ID. */
+export const getSuggestionFromId = async (id: number): Promise<Suggestion> => {
+	const foundSuggestion = (await FIND_BY_ID_STATEMENT.all({ id })).at(0);
+
+	if (!foundSuggestion)
+		throw new Error(`Could not fetch suggestion with ID ${id}`);
+
+	return new Suggestion(foundSuggestion.id);
+}
+
+/** Get a {@link DiscordSuggestion} from the associated {@link Message}. */
+export const getSuggestionFromMessage = async ({ id, channelId, url }: Message): Promise<Suggestion> => {
+	const foundSuggestion = (await FIND_BY_MESSAGE_STATEMENT.all({ channelId: channelId, messageId: id })).at(0);
+
+	if (!foundSuggestion)
+		throw new Error(
+			`Could not find a suggestion associated with message ${url}`,
+		);
+
+	return new Suggestion(foundSuggestion.id);
+}
 
 export type SuggestionButtonId =
 	typeof SuggestionUtil.BUTTON_ID[keyof typeof SuggestionUtil.BUTTON_ID];

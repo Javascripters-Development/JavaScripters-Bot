@@ -6,7 +6,7 @@ import {
 import type { Command } from "djs-fsrouter";
 import { getConfig, hyperlink } from "../utils.ts";
 import { handleUserError } from "../errors.ts";
-import { DiscordSuggestion } from "../structures/discord-suggestion.ts";
+import { Suggestion } from "../structures/suggestion.ts";
 
 export const type = ApplicationCommandType.ChatInput;
 
@@ -19,13 +19,13 @@ const Suggest: Command = {
 			name: "title",
 			description: "The title of the suggestion",
 			required: true,
-			maxLength: DiscordSuggestion.MAX_TITLE_LENGTH,
+			maxLength: Suggestion.MAX_TITLE_LENGTH,
 		},
 		{
 			type: ApplicationCommandOptionType.String,
 			name: "description",
 			description: "The description of the suggestion",
-			maxLength: DiscordSuggestion.MAX_DESCRIPTION_LENGTH,
+			maxLength: Suggestion.MAX_DESCRIPTION_LENGTH,
 		},
 	],
 	async run(interaction) {
@@ -53,7 +53,7 @@ const Suggest: Command = {
 			config.suggestionChannel,
 		)) as GuildTextBasedChannel;
 
-		const suggestion = await DiscordSuggestion.create({
+		const [_, messageUrl] = await Suggestion.create({
 			title: interaction.options.getString("title", true),
 			description: interaction.options.getString("description") ?? undefined,
 			member: interaction.member,
@@ -62,8 +62,8 @@ const Suggest: Command = {
 		});
 
 		return interaction.reply({
-			// rome-ignore format: more readable when not formatted
-			content: `Your suggestion has been submitted, you can view it ${hyperlink("here", suggestion.messageUrl)}`,
+			// biome-ignore format: more readable when not formatted
+			content: `Your suggestion has been submitted, you can view it ${hyperlink("here", messageUrl)}`,
 			ephemeral: true,
 		});
 	},

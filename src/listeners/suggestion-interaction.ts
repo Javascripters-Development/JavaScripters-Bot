@@ -5,7 +5,6 @@ import {
 	TextInputStyle,
 	inlineCode,
 } from "discord.js";
-import { DiscordSuggestion } from "../structures/discord-suggestion.ts";
 import type { Listener } from "../types/listener.ts";
 import {
 	Time,
@@ -19,8 +18,8 @@ import type {
 	SuggestionStatus,
 	UpdatedSuggestionStatus,
 } from "../schemas/suggestion.ts";
-import { SuggestionUtil } from "../structures/suggestion-util.ts";
-import { SuggestionManager } from "../structures/managers/suggestionManager.ts";
+import { SuggestionUtil, getSuggestionFromMessage } from "../structures/suggestion-util.ts";
+import { Suggestion } from "../structures/suggestion.ts";
 
 const MODAL_ID = "suggestion-modal";
 const MODAL_INPUT_ID = "suggestion-reason";
@@ -64,7 +63,7 @@ export default [
 				);
 			}
 
-			const suggestion = await SuggestionManager.getFromMessage(
+			const suggestion = await getSuggestionFromMessage(
 				interaction.message,
 			);
 
@@ -83,7 +82,7 @@ export default [
 				.setStyle(TextInputStyle.Paragraph)
 				.setLabel("What's the reason?")
 				.setPlaceholder("Leave empty if no reason necessary...")
-				.setMaxLength(DiscordSuggestion.MAX_REASON_LENGTH)
+				.setMaxLength(Suggestion.MAX_REASON_LENGTH)
 				.setRequired(false);
 			const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
 				textInput,
@@ -105,18 +104,18 @@ export default [
 			const inputReason =
 				modalInteraction.fields.getTextInputValue(MODAL_INPUT_ID);
 
-			suggestion.setStatus(
+			const updatedSuggestion = await suggestion.setStatus(
 				modalInteraction.user,
 				status,
 				inputReason || undefined,
 			);
 
-			await SuggestionUtil.updateMessage(suggestion, config);
+			await SuggestionUtil.updateMessage(updatedSuggestion, config);
 			await modalInteraction.reply({
 				content: `You set the status of ${hyperlink(
 					"this suggestion",
 					interaction.message.url,
-				)} to ${inlineCode(suggestion.status.toLowerCase())}`,
+				)} to ${inlineCode(updatedSuggestion.status.toLowerCase())}`,
 				ephemeral: true,
 			});
 		},
@@ -136,7 +135,7 @@ export default [
 				return;
 
 			const config = getConfig.get({ guildId: interaction.guildId });
-			const suggestion = await SuggestionManager.getFromMessage(
+			const suggestion = await getSuggestionFromMessage(
 				interaction.message,
 			);
 
@@ -146,7 +145,7 @@ export default [
 					await interaction.reply({
 						content: `Successfully upvoted ${hyperlink(
 							"this",
-							suggestion.messageUrl,
+							interaction.message.url,
 						)} suggestion`,
 						ephemeral: true,
 					});
@@ -164,7 +163,7 @@ export default [
 					await interaction.reply({
 						content: `Successfully downvoted ${hyperlink(
 							"this",
-							suggestion.messageUrl,
+							interaction.message.url,
 						)} suggestion`,
 						ephemeral: true,
 					});
@@ -178,7 +177,12 @@ export default [
 				}
 			}
 
-			await SuggestionUtil.updateMessage(suggestion, config);
+			const dbSuggestion = await suggestion.fetch()
+
+			if (dbSuggestion === undefined)
+				throw new Error('Suggestion does not exist')
+
+			await SuggestionUtil.updateMessage(dbSuggestion, config);
 		},
 	},
 ] as Listener[];

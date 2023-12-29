@@ -1,13 +1,24 @@
-import { type Snowflake, User } from "discord.js";
+import { type Snowflake, User, type GuildTextBasedChannel, GuildMember, EmbedBuilder } from "discord.js";
 import { Votable } from "./votable.ts";
 import {
 	Suggestion as DbSuggestion,
+	type SuggestionSelect,
 	type SuggestionStatus,
 } from "../schemas/suggestion.ts";
 import db from "../db.ts";
 import { eq } from "drizzle-orm";
+import type { ConfigSelect } from "../schemas/config.ts";
+import { SuggestionUtil, getSuggestionFromId } from "./suggestion-util.ts";
 
 export const SUGGESTION_USER_ALREADY_VOTED = "UserAlreadyVoted";
+
+interface CreateSuggestionOptions {
+	title: string;
+	description?: string;
+	channel: GuildTextBasedChannel;
+	member: GuildMember;
+	dbConfig?: ConfigSelect;
+}
 
 export class Suggestion extends Votable<Snowflake> {
 	/**
@@ -125,15 +136,17 @@ export class Suggestion extends Votable<Snowflake> {
 		user: User,
 		status: SuggestionStatus,
 		reason?: string,
-	): Promise<void> {
-		await db
+	): Promise<SuggestionSelect> {
+		return db
             .update(DbSuggestion)
             .set({
                 statusUserId: user.id,
                 status,
                 statusReason: reason,
                 updatedAt: new Date(),
-            });
+            })
+            .returning()
+            .then(updated => updated[0]);
 	}
 
     /** Fetch the suggestion from the database. */
@@ -144,4 +157,47 @@ export class Suggestion extends Votable<Snowflake> {
 			.where(eq(DbSuggestion.id, this.id))
 			.get();
     }
+
+    /** Create a new suggestion. */
+	public static async create({
+		title,
+		description,
+		channel,
+		member,
+		dbConfig,
+	}: CreateSuggestionOptions): Promise<[Suggestion, string]> {
+		const embed = new EmbedBuilder({
+			title: `Loading suggestion from ${member.user.username}...`,
+		});
+		const message = await channel.send({ embeds: [embed] });
+
+		const insertedRows = await db
+			.insert(DbSuggestion)
+			.values({
+				title,
+				description,
+
+				guildId: member.guild.id,
+				channelId: channel.id,
+				messageId: message.id,
+				userId: member.id,
+			})
+			.returning();
+		const insertedRow = insertedRows[0];
+
+		const messageOptions = await SuggestionUtil.getMessageOptions(
+			insertedRow,
+			dbConfig,
+		);
+
+		if (message.editable) await message.edit(messageOptions);
+
+		if (!message.hasThread)
+			await message.startThread({
+				name: `Suggestion: ${title}`,
+				reason: `New suggestion made by ${member.user.username}`,
+			});
+
+		return [new Suggestion(insertedRow.id), message.url];
+	}
 }
