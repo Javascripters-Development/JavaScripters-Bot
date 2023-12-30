@@ -7,7 +7,7 @@ export const stringSet = customType<{
 	default: true;
 }>({
 	dataType() {
-		return "stringSet";
+		return "text";
 	},
 	toDriver(value: Set<string>) {
 		return value.size ? [...value].join(",") : sql`NULL`;
