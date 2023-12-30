@@ -1,5 +1,4 @@
 import { type Snowflake, User, type GuildTextBasedChannel, GuildMember, EmbedBuilder } from "discord.js";
-import { Votable } from "./votable.ts";
 import {
 	Suggestion as DbSuggestion,
 	type SuggestionSelect,
@@ -21,7 +20,7 @@ interface CreateSuggestionOptions {
 	dbConfig?: ConfigSelect;
 }
 
-export class Suggestion extends Votable<Snowflake> {
+export class Suggestion {
 	/**
 	 * The maximum length for the suggestion title.
 	 *
@@ -45,15 +44,11 @@ export class Suggestion extends Votable<Snowflake> {
 
     public static readonly VOTE_SERIALIZE_SEPARATOR = ','
 
-	constructor(protected readonly id: number) {
-		super();
-	}
+	constructor(protected readonly id: number) {}
 
 	/** Upvote the suggestion. */
-	public override async upvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
+	public async upvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
 		if (await this.canVote()) return;
-
-		super.upvote(userId);
 
 		const dbSuggestion = db
 			.select({
@@ -84,10 +79,8 @@ export class Suggestion extends Votable<Snowflake> {
 	}
 
 	/** Downvote the suggestion. */
-	public override async downvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
+	public async downvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
 		if (await this.canVote()) return;
-
-		super.downvote(userId);
 
 		const dbSuggestion = db
 			.select({
@@ -118,7 +111,7 @@ export class Suggestion extends Votable<Snowflake> {
 	}
 
 	/** Remove the user's vote for the suggestion. */
-	public override async removeVote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
+	public async removeVote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
 		const dbSuggestion = db
 			.select({
 				downvotedBy: DbSuggestion.downvotedBy,
@@ -144,13 +137,11 @@ export class Suggestion extends Votable<Snowflake> {
 			.returning()
 			.then(updated => updated[0]);
 
-		super.removeVote(userId);
-
 		this.updateMessage(dbConfig, updatedSuggestion)
 	}
 
     /** Check if the suggestion can be voted on. */
-    public override async canVote() {
+    public async canVote() {
         const dbSuggestion = await db
 			.select({ status: DbSuggestion.status })
 			.from(DbSuggestion)
