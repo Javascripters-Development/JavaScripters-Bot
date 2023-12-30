@@ -1,11 +1,11 @@
-import { type Snowflake, User, type GuildTextBasedChannel, GuildMember, EmbedBuilder } from "discord.js";
+import { User, type GuildTextBasedChannel, GuildMember, EmbedBuilder, Message } from "discord.js";
 import {
 	Suggestion as DbSuggestion,
 	type SuggestionSelect,
 	type SuggestionStatus,
 } from "../schemas/suggestion.ts";
 import db from "../db.ts";
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { ConfigSelect } from "../schemas/config.ts";
 import { SuggestionUtil } from "./suggestion-util.ts";
 import { client } from "../client.ts";
@@ -19,6 +19,10 @@ interface CreateSuggestionOptions {
 	member: GuildMember;
 	dbConfig?: ConfigSelect;
 }
+
+const FIND_BY_MESSAGE_STATEMENT = db.query.Suggestion.findMany({
+	where: and(eq(DbSuggestion.channelId, sql.placeholder("channelId")), eq(DbSuggestion.messageId, sql.placeholder("messageId"))),
+}).prepare();
 
 export class Suggestion {
 	/**
@@ -41,8 +45,6 @@ export class Suggestion {
 	 * @default 2000
 	 */
 	public static readonly MAX_REASON_LENGTH = 2000;
-
-    public static readonly VOTE_SERIALIZE_SEPARATOR = ','
 
 	constructor(protected raw: SuggestionSelect) {}
 
@@ -172,7 +174,6 @@ export class Suggestion {
 
 		await suggestionMessage.edit(messageOptions);
 
-		const hasUpdatedStatus = this.raw.status !== 'POSTED'
 		const isThreadUnlocked = suggestionMessage?.thread && !suggestionMessage?.thread.locked
 
 		// Lock thread if suggestion is accepted/rejected
@@ -229,5 +230,18 @@ export class Suggestion {
 			});
 
 		return [new Suggestion(insertedRow), message.url];
+	}
+
+	/** Create the {@link Suggestion} instance from an existing suggestion {@link Message}. */
+	public static async createFromMessage({ id, channelId, url }: Message) {
+		// TEMP: use .all() and select the first row manually, .get() does not work
+		const foundSuggestion = (await FIND_BY_MESSAGE_STATEMENT.all({ channelId: channelId, messageId: id })).at(0);
+
+		if (!foundSuggestion)
+			throw new Error(
+				`Could not find a suggestion associated with message ${url}`,
+			);
+
+		return new Suggestion(foundSuggestion);
 	}
 }

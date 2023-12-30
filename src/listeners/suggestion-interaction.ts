@@ -19,7 +19,6 @@ import type {
 } from "../schemas/suggestion.ts";
 import {
 	SuggestionUtil,
-	getSuggestionFromMessage,
 	type SuggestionButtonId,
 } from "../structures/suggestion-util.ts";
 import { Suggestion } from "../structures/suggestion.ts";
@@ -66,7 +65,7 @@ export default ([
 				});
 			}
 
-			const suggestion = await getSuggestionFromMessage(interaction.message);
+			const suggestion = await Suggestion.createFromMessage(interaction.message);
 
 			const status = getKeyByValue(
 				SuggestionUtil.BUTTON_ID,
@@ -141,7 +140,7 @@ export default ([
 				return;
 
 			const config = getConfig.get({ guildId: interaction.guildId });
-			const suggestion = await getSuggestionFromMessage(interaction.message);
+			const suggestion = await Suggestion.createFromMessage(interaction.message);
 
 			if (interaction.customId === SuggestionUtil.VOTE_BUTTON_ID.UPVOTE) {
 				await suggestion.upvote(interaction.user.id, config);
