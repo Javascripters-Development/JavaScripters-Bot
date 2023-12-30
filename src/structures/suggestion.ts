@@ -44,23 +44,15 @@ export class Suggestion {
 
     public static readonly VOTE_SERIALIZE_SEPARATOR = ','
 
-	constructor(protected readonly id: number) {}
+	constructor(protected raw: SuggestionSelect) {}
 
 	/** Upvote the suggestion. */
 	public async upvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
-		if (await this.canVote()) return;
+		if (!this.canVote) return;
 
-		const dbSuggestion = db
-			.select({
-				downvotedBy: DbSuggestion.downvotedBy,
-				upvotedBy: DbSuggestion.upvotedBy,
-			})
-			.from(DbSuggestion)
-			.where(eq(DbSuggestion.id, this.id))
-			.get();
 
-		const upvotes = new Set(dbSuggestion?.upvotedBy);
-		const downvotes = new Set(dbSuggestion?.downvotedBy);
+		const upvotes = new Set(this.raw?.upvotedBy);
+		const downvotes = new Set(this.raw?.downvotedBy);
 
 		upvotes.add(userId);
 		downvotes.delete(userId);
@@ -71,28 +63,21 @@ export class Suggestion {
 				upvotedBy: upvotes,
 				downvotedBy: downvotes,
 			})
-			.where(eq(DbSuggestion.id, this.id))
+			.where(eq(DbSuggestion.id, this.raw.id))
 			.returning()
 			.then(updated => updated[0]);
 
-		this.updateMessage(dbConfig, updatedSuggestion)
+		this.raw = updatedSuggestion
+
+		this.updateMessage(dbConfig)
 	}
 
 	/** Downvote the suggestion. */
 	public async downvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
-		if (await this.canVote()) return;
+		if (!this.canVote) return;
 
-		const dbSuggestion = db
-			.select({
-				downvotedBy: DbSuggestion.downvotedBy,
-				upvotedBy: DbSuggestion.upvotedBy,
-			})
-			.from(DbSuggestion)
-			.where(eq(DbSuggestion.id, this.id))
-			.get();
-
-		const upvotes = new Set(dbSuggestion?.upvotedBy);
-		const downvotes = new Set(dbSuggestion?.downvotedBy);
+		const upvotes = new Set(this.raw?.upvotedBy);
+		const downvotes = new Set(this.raw?.downvotedBy);
 
 		upvotes.delete(userId);
 		downvotes.add(userId);
@@ -103,29 +88,19 @@ export class Suggestion {
 				upvotedBy: upvotes,
 				downvotedBy: downvotes,
 			})
-			.where(eq(DbSuggestion.id, this.id))
+			.where(eq(DbSuggestion.id, this.raw.id))
 			.returning()
 			.then(updated => updated[0]);
 
-		this.updateMessage(dbConfig, updatedSuggestion)
+		this.raw = updatedSuggestion
+
+		this.updateMessage(dbConfig)
 	}
 
 	/** Remove the user's vote for the suggestion. */
 	public async removeVote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
-		const dbSuggestion = db
-			.select({
-				downvotedBy: DbSuggestion.downvotedBy,
-				upvotedBy: DbSuggestion.upvotedBy,
-			})
-			.from(DbSuggestion)
-			.where(eq(DbSuggestion.id, this.id))
-			.get();
-
-		if (!dbSuggestion) return
-
-
-		const upvotes = new Set([...dbSuggestion.upvotedBy ?? []].filter(voteUserId => voteUserId !== userId))
-		const downvotes = new Set([...dbSuggestion.downvotedBy ?? []].filter(voteUserId => voteUserId !== userId))
+		const upvotes = new Set([...this.raw.upvotedBy ?? []].filter(voteUserId => voteUserId !== userId))
+		const downvotes = new Set([...this.raw.downvotedBy ?? []].filter(voteUserId => voteUserId !== userId))
 
 		const updatedSuggestion = await db
 			.update(DbSuggestion)
@@ -133,22 +108,18 @@ export class Suggestion {
 				upvotedBy: upvotes,
 				downvotedBy: downvotes,
 			})
-			.where(eq(DbSuggestion.id, this.id))
+			.where(eq(DbSuggestion.id, this.raw.id))
 			.returning()
 			.then(updated => updated[0]);
 
-		this.updateMessage(dbConfig, updatedSuggestion)
+		this.raw = updatedSuggestion
+
+		this.updateMessage(dbConfig)
 	}
 
     /** Check if the suggestion can be voted on. */
-    public async canVote() {
-        const dbSuggestion = await db
-			.select({ status: DbSuggestion.status })
-			.from(DbSuggestion)
-			.where(eq(DbSuggestion.id, this.id))
-			.get();
-
-        return dbSuggestion?.status === 'POSTED'
+    public get canVote() {
+        return this.raw?.status === 'POSTED'
     }
 
 	/** Set the status of the suggestion. */
@@ -166,40 +137,46 @@ export class Suggestion {
                 statusReason: reason ?? null,
                 updatedAt: new Date(),
             })
-			.where(eq(DbSuggestion.id, this.id))
+			.where(eq(DbSuggestion.id, this.raw.id))
             .returning()
             .then(updated => updated[0]);
 
-		this.updateMessage(dbConfig, updatedSuggestion)
+		this.raw = updatedSuggestion
+
+		this.updateMessage(dbConfig)
+	}
+
+	/** The amount of upvotes. */
+	get upvoteCount() {
+		return this.raw.upvotedBy?.size ?? 0
+	}
+
+	/** The amount of downvotes. */
+	get downvoteCount() {
+		return this.raw.downvotedBy?.size ?? 0
+	}
+
+	/** Whether . */
+	get hasUpdatedStatus() {
+		return this.raw.status !== 'POSTED'
 	}
 
 	/** Update the suggestion's message */
-	protected async updateMessage(dbConfig?: ConfigSelect, dbSuggestion?: SuggestionSelect) {
-		const _dbSuggestion = dbSuggestion
-			? dbSuggestion
-			: db
-				.select()
-				.from(DbSuggestion)
-				.where(eq(DbSuggestion.id, this.id))
-				.all()
-				.at(0)
-
-		if (!_dbSuggestion) return
-
-		const channel = await client.channels.fetch(_dbSuggestion.channelId)
-		const suggestionMessage = channel?.isTextBased() ? await channel?.messages.fetch(_dbSuggestion.messageId) : null
-		const messageOptions = await SuggestionUtil.getMessageOptions(_dbSuggestion, dbConfig);
+	protected async updateMessage(dbConfig?: ConfigSelect) {
+		const channel = await client.channels.fetch(this.raw.channelId)
+		const suggestionMessage = channel?.isTextBased() ? await channel?.messages.fetch(this.raw.messageId) : null
+		const messageOptions = await SuggestionUtil.getMessageOptions(this.raw, dbConfig);
 
 		// Ensure the message can be edited
 		if (!suggestionMessage?.editable) return;
 
 		await suggestionMessage.edit(messageOptions);
 
-		const hasUpdatedStatus = _dbSuggestion.status !== 'POSTED'
+		const hasUpdatedStatus = this.raw.status !== 'POSTED'
 		const isThreadUnlocked = suggestionMessage?.thread && !suggestionMessage?.thread.locked
 
 		// Lock thread if suggestion is accepted/rejected
-		if (hasUpdatedStatus && isThreadUnlocked) {
+		if (this.hasUpdatedStatus && isThreadUnlocked) {
 			await suggestionMessage.thread.setLocked(
 				true,
 				"Suggestion got accepted or rejected",
@@ -208,7 +185,7 @@ export class Suggestion {
 	}
 
 	toString() {
-		return `Suggestion { id: ${this.id} }`
+		return `Suggestion { id: ${this.raw.id}; title: ${this.raw.title} }`
 	}
 
     /** Create a new suggestion. */
@@ -251,6 +228,6 @@ export class Suggestion {
 				reason: `New suggestion made by ${member.user.username}`,
 			});
 
-		return [new Suggestion(insertedRow.id), message.url];
+		return [new Suggestion(insertedRow), message.url];
 	}
 }
