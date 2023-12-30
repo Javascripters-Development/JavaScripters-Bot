@@ -7,7 +7,7 @@ export type CheerioNode = {
 	attribs: { [attr: string]: string };
 };
 
-const CACHE_DURATION = (process.env.SCRAPE_CACHE || 1)  * 3600_000;
+const CACHE_DURATION = (process.env.SCRAPE_CACHE || 1) * 3600_000;
 const cache = new Map<string, { fetchDate: number; crawler: CheerioAPI }>();
 
 export default async function scrape(url: string, skipCache = false) {

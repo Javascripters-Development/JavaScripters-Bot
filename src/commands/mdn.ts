@@ -89,7 +89,7 @@ const Info: Command = {
 };
 export default Info;
 
-const BASE_URL = `https://www.googleapis.com/customsearch/v1/siterestrict?key=${process.env.CSE_KEY}&cx=${process.env.CSE_CSX}`
+const BASE_URL = `https://www.googleapis.com/customsearch/v1/siterestrict?key=${process.env.CSE_KEY}&cx=${process.env.CSE_CSX}`;
 
 function search(term: string, num = 10) {
 	if (!Number.isInteger(num) || num < 1 || num > 10)

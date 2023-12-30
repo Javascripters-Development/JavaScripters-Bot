@@ -26,7 +26,7 @@
 	"scripts": {
 		"dev": "bun --watch ./src/index.ts",
 		"prod": "NODE_ENV=production bun src/index.ts",
-		"format": "biome format",
+		"format": "biome format --write ./src",
 		"lint": "biome check ./src",
 		"migrate": "bun run migrate:generate && bun run migrate:execute",
 		"migrate:generate": "drizzle-kit generate:sqlite",
