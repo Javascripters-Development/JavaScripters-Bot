@@ -7,18 +7,7 @@ export type CheerioNode = {
 	attribs: { [attr: string]: string };
 };
 
-if (process.env.SCRAPE_CACHE) {
-	if (!Number.isInteger(+process.env.SCRAPE_CACHE))
-		throw new TypeError(
-			"Environment variable SCRAPE_CACHE should be an integer",
-		);
-	if (+process.env.SCRAPE_CACHE < 0)
-		throw new RangeError(
-			"Environment variable SCRAPE_CACHE should be 0 or positive",
-		);
-}
-
-const CACHE_DURATION = +(process.env.SCRAPE_CACHE || 1) * 3600_000;
+const CACHE_DURATION = (process.env.SCRAPE_CACHE || 1)  * 3600_000;
 const cache = new Map<string, { fetchDate: number; crawler: CheerioAPI }>();
 
 export default async function scrape(url: string, skipCache = false) {
