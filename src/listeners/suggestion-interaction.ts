@@ -18,8 +18,13 @@ import type {
 	UpdatedSuggestionStatus,
 } from "../schemas/suggestion.ts";
 import {
-	SuggestionUtil,
+	BUTTON_ID,
+	BUTTON_ID_STATUS_MAP,
+	getStatusAsVerb,
+	isValidStatusButtonInteraction,
+	VOTE_BUTTON_ID,
 	type SuggestionButtonId,
+	isValidVoteButtonInteraction,
 } from "../structures/suggestion-util.ts";
 import { Suggestion } from "../structures/suggestion.ts";
 
@@ -33,7 +38,7 @@ export default ([
 		async handler(interaction) {
 			if (
 				!(
-					SuggestionUtil.isValidInteraction(interaction) &&
+					isValidStatusButtonInteraction(interaction) &&
 					interaction.member &&
 					// Ensure interaction.member is not an instance of APIInteractionGuildMember
 					interaction.inCachedGuild()
@@ -65,10 +70,12 @@ export default ([
 				});
 			}
 
-			const suggestion = await Suggestion.createFromMessage(interaction.message);
+			const suggestion = await Suggestion.createFromMessage(
+				interaction.message,
+			);
 
 			const status = getKeyByValue(
-				SuggestionUtil.BUTTON_ID,
+				BUTTON_ID,
 				interaction.customId as UpdatedSuggestionStatus,
 			) as SuggestionStatus | undefined;
 
@@ -90,9 +97,7 @@ export default ([
 			const modal = new ModalBuilder()
 				.setCustomId(MODAL_ID)
 				.setTitle(
-					`${capitalizeFirstLetter(
-						SuggestionUtil.getStatusVerb(status),
-					)} suggestion`,
+					`${capitalizeFirstLetter(getStatusAsVerb(status))} suggestion`,
 				)
 				.addComponents(actionRow);
 
@@ -112,9 +117,7 @@ export default ([
 			);
 
 			const statusString =
-				SuggestionUtil.BUTTON_ID_STATUS_MAP[
-					interaction.customId as SuggestionButtonId
-				];
+				BUTTON_ID_STATUS_MAP[interaction.customId as SuggestionButtonId];
 
 			await modalInteraction.reply({
 				content: `You set the status of ${hyperlink(
@@ -131,7 +134,7 @@ export default ([
 		async handler(interaction) {
 			if (
 				!(
-					SuggestionUtil.isValidVoteInteraction(interaction) &&
+					isValidVoteButtonInteraction(interaction) &&
 					interaction.member &&
 					// Ensure interaction.member is not an instance of APIInteractionGuildMember
 					interaction.inCachedGuild()
@@ -140,9 +143,11 @@ export default ([
 				return;
 
 			const config = getConfig.get({ guildId: interaction.guildId });
-			const suggestion = await Suggestion.createFromMessage(interaction.message);
+			const suggestion = await Suggestion.createFromMessage(
+				interaction.message,
+			);
 
-			if (interaction.customId === SuggestionUtil.VOTE_BUTTON_ID.UPVOTE) {
+			if (interaction.customId === VOTE_BUTTON_ID.UPVOTE) {
 				await suggestion.upvote(interaction.user.id, config);
 				await interaction.reply({
 					content: `Successfully upvoted ${hyperlink(
