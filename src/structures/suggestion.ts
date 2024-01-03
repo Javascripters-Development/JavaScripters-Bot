@@ -70,7 +70,7 @@ export class Suggestion {
 	public static readonly MAX_REASON_LENGTH = 2000;
 
 	constructor(
-		protected raw: SuggestionSelect,
+		protected data: SuggestionSelect,
 		private dbConfig: ConfigSelect,
 	) {}
 
@@ -78,8 +78,8 @@ export class Suggestion {
 	public async upvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
 		if (!this.canVote) return;
 
-		const upvotes = new Set(this.raw?.upvotedBy);
-		const downvotes = new Set(this.raw?.downvotedBy);
+		const upvotes = new Set(this.data?.upvotedBy);
+		const downvotes = new Set(this.data?.downvotedBy);
 
 		upvotes.add(userId);
 		downvotes.delete(userId);
@@ -90,11 +90,11 @@ export class Suggestion {
 				upvotedBy: upvotes,
 				downvotedBy: downvotes,
 			})
-			.where(eq(DbSuggestion.id, this.raw.id))
+			.where(eq(DbSuggestion.id, this.data.id))
 			.returning()
 			.then((updated) => updated[0]);
 
-		this.raw = updatedSuggestion;
+		this.data = updatedSuggestion;
 
 		this.updateMessage(dbConfig);
 	}
@@ -106,8 +106,8 @@ export class Suggestion {
 	): Promise<void> {
 		if (!this.canVote) return;
 
-		const upvotes = new Set(this.raw?.upvotedBy);
-		const downvotes = new Set(this.raw?.downvotedBy);
+		const upvotes = new Set(this.data?.upvotedBy);
+		const downvotes = new Set(this.data?.downvotedBy);
 
 		upvotes.delete(userId);
 		downvotes.add(userId);
@@ -118,11 +118,11 @@ export class Suggestion {
 				upvotedBy: upvotes,
 				downvotedBy: downvotes,
 			})
-			.where(eq(DbSuggestion.id, this.raw.id))
+			.where(eq(DbSuggestion.id, this.data.id))
 			.returning()
 			.then((updated) => updated[0]);
 
-		this.raw = updatedSuggestion;
+		this.data = updatedSuggestion;
 
 		this.updateMessage(dbConfig);
 	}
@@ -133,12 +133,12 @@ export class Suggestion {
 		dbConfig?: ConfigSelect,
 	): Promise<void> {
 		const upvotes = new Set(
-			[...(this.raw.upvotedBy ?? [])].filter(
+			[...(this.data.upvotedBy ?? [])].filter(
 				(voteUserId) => voteUserId !== userId,
 			),
 		);
 		const downvotes = new Set(
-			[...(this.raw.downvotedBy ?? [])].filter(
+			[...(this.data.downvotedBy ?? [])].filter(
 				(voteUserId) => voteUserId !== userId,
 			),
 		);
@@ -149,18 +149,18 @@ export class Suggestion {
 				upvotedBy: upvotes,
 				downvotedBy: downvotes,
 			})
-			.where(eq(DbSuggestion.id, this.raw.id))
+			.where(eq(DbSuggestion.id, this.data.id))
 			.returning()
 			.then((updated) => updated[0]);
 
-		this.raw = updatedSuggestion;
+		this.data = updatedSuggestion;
 
 		this.updateMessage(dbConfig);
 	}
 
 	/** Check if the suggestion can be voted on. */
 	public get canVote() {
-		return this.raw?.status === "POSTED";
+		return this.data?.status === "POSTED";
 	}
 
 	/** Set the status of the suggestion. */
@@ -178,20 +178,20 @@ export class Suggestion {
 				statusReason: reason ?? null,
 				updatedAt: new Date(),
 			})
-			.where(eq(DbSuggestion.id, this.raw.id))
+			.where(eq(DbSuggestion.id, this.data.id))
 			.returning()
 			.then((updated) => updated[0]);
 
-		this.raw = updatedSuggestion;
+		this.data = updatedSuggestion;
 
 		this.updateMessage(dbConfig);
 	}
 
 	/** Update the suggestion's message */
 	protected async updateMessage(dbConfig?: ConfigSelect) {
-		const channel = await client.channels.fetch(this.raw.channelId);
+		const channel = await client.channels.fetch(this.data.channelId);
 		const suggestionMessage = channel?.isTextBased()
-			? await channel?.messages.fetch(this.raw.messageId)
+			? await channel?.messages.fetch(this.data.messageId)
 			: null;
 		const messageOptions = await Suggestion.getMessageOptions(this);
 
@@ -213,65 +213,65 @@ export class Suggestion {
 	}
 
 	toString() {
-		return `Suggestion { id: ${this.raw.id}; title: ${this.raw.title} }`;
+		return `Suggestion { id: ${this.data.id}; title: ${this.data.title} }`;
 	}
 
 	/** The user ID of the user who made the suggestion. */
 	get userId() {
-		return this.raw.userId;
+		return this.data.userId;
 	}
 
 	get title() {
-		return this.raw.title;
+		return this.data.title;
 	}
 
 	get description() {
-		return this.raw.description;
+		return this.data.description;
 	}
 
 	get status() {
-		return this.raw.status;
+		return this.data.status;
 	}
 
 	/** The reason for the status update if available. */
 	get statusReason() {
-		return this.raw.statusReason;
+		return this.data.statusReason;
 	}
 
 	/** The ID of the user that updated the status. */
 	get statusUserId() {
-		return this.raw.statusUserId;
+		return this.data.statusUserId;
 	}
 
 	/** The user IDs that upvoted this suggestion. */
 	get upvotedBy() {
-		return this.raw.upvotedBy ?? new Set();
+		return this.data.upvotedBy ?? new Set();
 	}
 
 	/** The user IDs that downvoted this suggestion. */
 	get downvotedBy() {
-		return this.raw.downvotedBy ?? new Set();
+		return this.data.downvotedBy ?? new Set();
 	}
 
 	get upvoteCount() {
-		return this.raw.upvotedBy?.size ?? 0;
+		return this.data.upvotedBy?.size ?? 0;
 	}
 
 	get downvoteCount() {
-		return this.raw.downvotedBy?.size ?? 0;
+		return this.data.downvotedBy?.size ?? 0;
 	}
 
 	/** Whether the status has been updated before. */
 	get hasUpdatedStatus() {
-		return this.raw.status !== "POSTED";
+		return this.data.status !== "POSTED";
 	}
 
 	get updatedAt() {
-		return this.raw.updatedAt;
+		return this.data.updatedAt;
 	}
 
 	get createdAt() {
-		return this.raw.createdAt;
+		return this.data.createdAt;
 	}
 
 	/** Create a new suggestion. */
