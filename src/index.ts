@@ -1,26 +1,13 @@
 import loadCommands from "djs-fsrouter";
-import {
-	Client,
-	GatewayIntentBits,
-	Events,
-	type ClientEvents,
-	type Awaitable,
-} from "discord.js";
-import { join } from "node:path";
-import { readdir } from "node:fs/promises";
 import { exit } from "node:process";
+import { Events, type ClientEvents, type Awaitable } from "discord.js";
+import { join } from "path";
+import { readdir } from "fs/promises";
 import { castArray } from "./utils.ts";
 import type { Listener } from "./types/listener.ts";
+import { client } from "./client.ts";
 import env from "./types/env.ts";
 import { safeParse } from "valibot";
-const client = new Client({
-	intents: [
-		GatewayIntentBits.Guilds,
-		GatewayIntentBits.GuildMessages,
-		GatewayIntentBits.MessageContent,
-		GatewayIntentBits.GuildMembers,
-	],
-});
 
 const parsedEnv = safeParse(
 	env,
