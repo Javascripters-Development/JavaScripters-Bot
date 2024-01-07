@@ -82,7 +82,7 @@ export default [
 								icon_url: author.avatarURL() || undefined,
 							},
 							description:
-								`**${author} edited a [message](${newMessage.url}) in ${channel}\nPrevious message:**\n\n${oldContent}`.substring(
+								`**✏️ ${author} edited a [message](${newMessage.url}) in ${channel}\nPrevious message:**\n\n${oldContent}`.substring(
 									0,
 									2056,
 								),
