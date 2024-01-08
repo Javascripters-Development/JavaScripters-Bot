@@ -6,8 +6,6 @@ import type { Command } from "djs-fsrouter";
 export const type = ApplicationCommandType.ChatInput;
 const Disable: Command = {
 	description: "Disable message logging",
-	dmPermission: false,
-	defaultMemberPermissions: "0",
 	async run(interaction) {
 		if (!interaction.guild) return;
 
