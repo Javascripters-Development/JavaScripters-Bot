@@ -11,7 +11,7 @@ type SearchResult = {
 	snippet: string;
 };
 
-const Info: Command = {
+const Mdn: Command = {
 	description: "Search the Modzilla Developer Network",
 	options: [
 		{
@@ -95,7 +95,7 @@ const Info: Command = {
 		}).catch(console.error);
 	},
 };
-export default Info;
+export default Mdn;
 
 const BASE_URL =
 	process.env.CSE_KEY && process.env.CSE_CSX

@@ -8,7 +8,7 @@ import {
 import type { Command } from "djs-fsrouter";
 
 export const type = ApplicationCommandType.ChatInput;
-const Disable: Command = {
+const Enable: Command = {
 	description: "Enable message logging",
 	dmPermission: false,
 	defaultMemberPermissions: "0",
@@ -50,4 +50,4 @@ const Disable: Command = {
 			.catch(console.error);
 	},
 };
-export default Disable;
+export default Enable;

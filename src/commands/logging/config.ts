@@ -4,7 +4,7 @@ import { ApplicationCommandType } from "discord.js";
 import type { Command } from "djs-fsrouter";
 
 export const type = ApplicationCommandType.ChatInput;
-const Disable: Command = {
+const Config: Command = {
 	description: "See the current config",
 	dmPermission: false,
 	defaultMemberPermissions: "0",
@@ -23,4 +23,4 @@ const Disable: Command = {
 			.catch(console.error);
 	},
 };
-export default Disable;
+export default Config;
