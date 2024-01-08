@@ -2,7 +2,7 @@ import db from "../../db.ts";
 import { Config } from "../../schemas/config.ts";
 import { LoggingWhitelist } from "../../schemas/loggingWhitelist.ts";
 import type { TextChannel, Guild, Role } from "discord.js";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 const { placeholder } = sql;
 
 export enum LogMode {
@@ -60,3 +60,40 @@ export function setLogging(
 export function getConfig({ id }: Guild) {
 	return logModes.get(id);
 }
+
+export function getWhitelist({ id: guildId }: Guild) {
+	return whitelistRoles.all({ guildId }).map(({ id }) => id);
+}
+
+export function whitelistRole({ id, guild: { id: guildId } }: Role) {
+	return whitelistRole_add.execute({ guildId, id });
+}
+
+// For some reason, simply returning the execute makes the roleDelete listener not work
+export async function unwhitelistRole({ id, guild: { id: guildId } }: Role) {
+	return await whitelistRole_remove.execute({ guildId, id });
+}
+
+const whitelistRoles = db
+	.select({ id: LoggingWhitelist.roleId })
+	.from(LoggingWhitelist)
+	.where(eq(LoggingWhitelist.guildId, placeholder("guildId")))
+	.prepare();
+
+const whitelistRole_add = db
+	.insert(LoggingWhitelist)
+	.values({ guildId: placeholder("guildId"), roleId: placeholder("id") })
+	.onConflictDoNothing()
+	.returning()
+	.prepare();
+
+const whitelistRole_remove = db
+	.delete(LoggingWhitelist)
+	.where(
+		and(
+			eq(LoggingWhitelist.guildId, placeholder("guildId")),
+			eq(LoggingWhitelist.roleId, placeholder("id")),
+		),
+	)
+	.returning()
+	.prepare();

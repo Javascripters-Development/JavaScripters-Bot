@@ -1,19 +1,25 @@
-import { type Guild, Message, type APIEmbed } from "discord.js";
-import { LogMode, getConfig } from "../commands/logging/$config.ts";
+import {
+	type Guild,
+	Message,
+	type APIEmbed,
+	GuildMember,
+	type PartialMessage,
+} from "discord.js";
+import {
+	LogMode,
+	getConfig,
+	getWhitelist,
+	unwhitelistRole,
+} from "../commands/logging/$config.ts";
 import type { Listener } from "../types/listener.ts";
 
 export default [
 	{
 		event: "messageDelete",
 		async handler(message) {
+			if (message.partial || shouldIgnore(message)) return;
 			const channel = await getLogChannel(message.guild, LogMode.DELETES);
-			if (
-				!channel?.isTextBased() ||
-				message.partial ||
-				message.system ||
-				message.author.bot
-			)
-				return;
+			if (!channel?.isTextBased()) return;
 
 			const embed = {
 				...msgDeletionEmbed(message),
@@ -40,7 +46,7 @@ export default [
 			const embeds = (
 				await Promise.all(messages.map((msg) => msg.fetch(false)))
 			)
-				.filter(({ system, author }) => !system && !author.bot)
+				.filter((message) => !shouldIgnore(message))
 				.map(msgDeletionEmbed);
 
 			channel
@@ -63,13 +69,9 @@ export default [
 	{
 		event: "messageUpdate",
 		async handler(oldMessage, newMessage) {
+			if (oldMessage.partial || shouldIgnore(oldMessage)) return;
 			const channel = await getLogChannel(oldMessage.guild, LogMode.EDITS);
-			if (
-				!channel?.isTextBased() ||
-				oldMessage.partial ||
-				oldMessage.author.bot
-			)
-				return;
+			if (!channel?.isTextBased()) return;
 
 			const { author, content: oldContent } = oldMessage;
 			channel
@@ -93,7 +95,17 @@ export default [
 				.catch(console.error);
 		},
 	},
+	{
+		event: "roleDelete",
+		handler: unwhitelistRole,
+	},
 ] as Listener[];
+
+function shouldIgnore({ system, author, member }: Message) {
+	if (!member || author.bot || system) return true;
+	const whitelist = getWhitelist(member.guild);
+	return member.roles.cache.some((_, id) => whitelist.includes(id));
+}
 
 function getLogChannel(guild: Guild | null, requiredMode: LogMode) {
 	if (!guild) return null;
