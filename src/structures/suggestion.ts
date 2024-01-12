@@ -33,8 +33,7 @@ import {
 export const SUGGESTION_USER_ALREADY_VOTED = "UserAlreadyVoted";
 
 interface CreateSuggestionOptions {
-	title: string;
-	description?: string;
+	description: string;
 	channel: GuildTextBasedChannel;
 	member: GuildMember;
 	dbConfig: ConfigSelect;
@@ -213,16 +212,16 @@ export class Suggestion {
 	}
 
 	toString() {
-		return `Suggestion { id: ${this.data.id}; title: ${this.data.title} }`;
+		return `Suggestion { id: ${this.data.id} }`;
+	}
+
+	get id() {
+		return this.data.id;
 	}
 
 	/** The user ID of the user who made the suggestion. */
 	get userId() {
 		return this.data.userId;
-	}
-
-	get title() {
-		return this.data.title;
 	}
 
 	get description() {
@@ -276,7 +275,6 @@ export class Suggestion {
 
 	/** Create a new suggestion. */
 	public static async create({
-		title,
 		description,
 		channel,
 		member,
@@ -290,7 +288,6 @@ export class Suggestion {
 		const insertedRows = await db
 			.insert(DbSuggestion)
 			.values({
-				title,
 				description,
 
 				guildId: member.guild.id,
@@ -309,7 +306,7 @@ export class Suggestion {
 
 		if (!message.hasThread)
 			await message.startThread({
-				name: `Suggestion: ${title}`,
+				name: messageOptions.embeds[0].data.title ?? "Suggestion",
 				reason: `New suggestion made by ${member.user.username}`,
 			});
 
@@ -374,7 +371,7 @@ export class Suggestion {
 					: suggestion.status === "REJECTED"
 					  ? Colors.Red
 					  : Colors.White,
-			title: suggestion.title,
+			title: `Suggestion #${suggestion.id}`,
 			description: suggestion.description ?? undefined,
 			fields,
 			author,

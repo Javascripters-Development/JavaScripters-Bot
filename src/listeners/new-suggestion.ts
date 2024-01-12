@@ -5,14 +5,25 @@ import { getConfig } from "../utils.ts";
 export default ({
 	event: "messageCreate",
 	async handler(message) {
-		if (!message.inGuild() || !message.deletable) return;
+		if (
+			!message.inGuild() ||
+			!message.deletable ||
+			!message.member ||
+			message.author.bot
+		)
+			return;
 
-		const { suggestionChannel } =
-			(await getConfig.get({ guildId: message.guildId })) ?? {};
+		const dbConfig = getConfig.get({ guildId: message.guildId });
 
-		if (!suggestionChannel) return;
+		if (!dbConfig?.suggestionChannel) return;
 
 		await message.delete();
-		await Suggestion.createFromMessage(message);
+
+		Suggestion.create({
+			description: message.content,
+			channel: message.channel,
+			member: message.member,
+			dbConfig,
+		});
 	},
 } as Listener);
