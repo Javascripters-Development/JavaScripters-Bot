@@ -11,6 +11,7 @@ import {
 	ActionRowBuilder,
 	time,
 	ButtonStyle,
+	messageLink,
 } from "discord.js";
 import {
 	Suggestion as DbSuggestion,
@@ -219,6 +220,13 @@ export class Suggestion {
 		return this.data.id;
 	}
 
+	/** The URL to the message. */
+	get url() {
+		const { guildId, channelId, messageId } = this.data;
+
+		return messageLink(guildId, channelId, messageId);
+	}
+
 	/** The user ID of the user who made the suggestion. */
 	get userId() {
 		return this.data.userId;
@@ -279,7 +287,7 @@ export class Suggestion {
 		channel,
 		member,
 		dbConfig,
-	}: CreateSuggestionOptions): Promise<[Suggestion, string]> {
+	}: CreateSuggestionOptions): Promise<Suggestion> {
 		const embed = new EmbedBuilder({
 			title: `Loading suggestion from ${member.user.username}...`,
 		});
@@ -310,7 +318,7 @@ export class Suggestion {
 				reason: `New suggestion made by ${member.user.username}`,
 			});
 
-		return [suggestion, message.url];
+		return suggestion;
 	}
 
 	/** Create the {@link Suggestion} instance from an existing suggestion {@link Message}. */
