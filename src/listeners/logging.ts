@@ -13,6 +13,9 @@ import {
 } from "../commands/logging/$config.ts";
 import type { Listener } from "../types/listener.ts";
 
+export const deleteColor = 0xdd4444;
+export const editColor = 0xdd6d0c;
+
 export default [
 	{
 		event: "messageDelete",
@@ -53,7 +56,7 @@ export default [
 				.send({
 					embeds: [
 						{
-							color: 0xdd4444,
+							color: deleteColor,
 							description: `**🗑️ ${embeds.length} messages bulk-deleted in ${channel}**`,
 							timestamp: new Date().toISOString(),
 						},
@@ -78,7 +81,7 @@ export default [
 				.send({
 					embeds: [
 						{
-							color: 0xdd6d0c,
+							color: editColor,
 							author: {
 								name: author.tag,
 								icon_url: author.avatarURL() || undefined,
@@ -134,7 +137,7 @@ function getLogChannel(guild: Guild | null, requiredMode: LogMode) {
 function msgDeletionEmbed({ content, author, attachments }: Message): APIEmbed {
 	let attachmentN = 0;
 	return {
-		color: 0xdd4444,
+		color: deleteColor,
 		author: { name: author.tag, icon_url: author.avatarURL() || undefined },
 		description: content,
 		fields: attachments.size
