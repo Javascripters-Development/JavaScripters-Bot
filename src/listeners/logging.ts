@@ -101,12 +101,23 @@ export default [
 	},
 ] as Listener[];
 
+/**
+ * Tells if the logging system should ignore the given message.
+ * @param message The message to analyse
+ * @returns
+ */
 function shouldIgnore({ system, author, member }: Message) {
 	if (!member || author.bot || system) return true;
 	const whitelist = getWhitelist(member.guild);
 	return member.roles.cache.some((_, id) => whitelist.includes(id));
 }
 
+/**
+ * Gets the logging channel conditionally to a logging mode.
+ * @param guild
+ * @param requiredMode
+ * @returns null if the required mode isn't met, otherwise a Promise resolving to the channel
+ */
 function getLogChannel(guild: Guild | null, requiredMode: LogMode) {
 	if (!guild) return null;
 	const config = getConfig(guild);
@@ -115,6 +126,11 @@ function getLogChannel(guild: Guild | null, requiredMode: LogMode) {
 	return guild.channels.fetch(config.channel);
 }
 
+/**
+ * Generates a deletion log for the provided message
+ * @param message The message to log
+ * @returns The embed
+ */
 function msgDeletionEmbed({ content, author, attachments }: Message): APIEmbed {
 	let attachmentN = 0;
 	return {
