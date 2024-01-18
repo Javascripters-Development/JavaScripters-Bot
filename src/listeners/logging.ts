@@ -53,6 +53,8 @@ export default [
 				)
 				.map(msgDeletionEmbed);
 
+			if (!embeds.length) return;
+
 			channel
 				.send({
 					embeds: [
