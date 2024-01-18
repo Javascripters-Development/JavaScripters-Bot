@@ -46,10 +46,11 @@ export default [
 			);
 			if (!channel?.isTextBased()) return;
 
-			const embeds = (
-				await Promise.all(messages.map((msg) => msg.fetch(false)))
-			)
-				.filter((message) => !shouldIgnore(message))
+			const embeds = messages
+				.filter(
+					(message): message is Message =>
+						!message.partial && !shouldIgnore(message),
+				)
 				.map(msgDeletionEmbed);
 
 			channel
