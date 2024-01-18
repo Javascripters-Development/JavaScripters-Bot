@@ -3,6 +3,7 @@ import { getConfig } from "./$config.ts";
 import {
 	ApplicationCommandOptionType,
 	ApplicationCommandType,
+	GuildMessageManager,
 	Message,
 	User,
 } from "discord.js";
@@ -40,23 +41,15 @@ const Config: Command = {
 
 		const target = interaction.options.getUser("user", true);
 		const targetMention = target.toString();
-		const now = Date.now();
 		const me = await guild.members.fetchMe();
-		let chunk = await logs.messages.fetch({ limit: 100, cache: false });
-		let last = chunk.last();
 		const promises = [];
 		const toDelete: Message[] = [];
 		let bulkPurges = 0;
 
-		while (last) {
-			chunk = chunk.filter((message) => {
-				const { member, embeds, createdTimestamp } = message;
-				if (
-					member !== me ||
-					!embeds.length ||
-					now - createdTimestamp > _14_DAYS
-				)
-					return false;
+		for await (const chunk of fetchTill14days(logs.messages)) {
+			const targetLogs = chunk.filter((message) => {
+				const { member, embeds } = message;
+				if (member !== me || !embeds.length) return false;
 
 				const [{ description: embed, color }] = embeds;
 				if (!embed || (color !== deleteColor && color !== editColor))
@@ -68,19 +61,9 @@ const Config: Command = {
 				}
 				const mentionPos = embed.indexOf(targetMention);
 				if (mentionPos !== -1 && mentionPos < embed.indexOf("\n")) return true;
-				return false;
 			});
 
-			if (chunk.size) toDelete.push(...chunk.values());
-
-			if (now - last.createdTimestamp > _14_DAYS) break;
-
-			chunk = await logs.messages.fetch({
-				before: last.id,
-				limit: 100,
-				cache: false,
-			});
-			last = chunk.last();
+			if (targetLogs.size) toDelete.push(...targetLogs.values());
 		}
 
 		for (let i = 0; i < toDelete.length; i += 100)
@@ -95,6 +78,26 @@ const Config: Command = {
 	},
 };
 export default Config;
+
+async function* fetchTill14days(messageManager: GuildMessageManager) {
+	const now = Date.now();
+	let chunk = await messageManager.fetch({ limit: 100, cache: false });
+	let last = chunk.last();
+	while (last) {
+		yield chunk.filter(
+			({ createdTimestamp }) => now - createdTimestamp < _14_DAYS,
+		);
+
+		if (now - last.createdTimestamp > _14_DAYS) return;
+
+		chunk = await messageManager.fetch({
+			before: last.id,
+			limit: 100,
+			cache: false,
+		});
+		last = chunk.last();
+	}
+}
 
 /**
  * Purges logs of a given user from a bulk log
