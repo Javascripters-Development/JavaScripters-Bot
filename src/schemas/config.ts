@@ -13,6 +13,12 @@ export const Config = sqliteTable("guildConfig", {
 
 	loggingMode: integer("loggingMode", { mode: "number" }).default(0),
 	loggingChannel: text("loggingChannel").default(""),
+
+	suggestionChannel: text("suggestionChannel"),
+	suggestionManagerRole: text("suggestionManagerRole"),
+	suggestionUpvoteEmoji: text("suggestionUpvoteEmoji",).default('👍'),
+	suggestionDownvoteEmoji: text("suggestionDownvoteEmoji").default('👎'),
 });
+
 export type ConfigSelect = InferSelectModel<typeof Config>;
 export type ConfigInsert = InferInsertModel<typeof Config>;

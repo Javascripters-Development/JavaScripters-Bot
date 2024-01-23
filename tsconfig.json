@@ -5,7 +5,7 @@
 
     // enable latest features
     "lib": ["esnext"],
-    "module": "esnext",
+    "module": "NodeNext",
     "target": "esnext",
     "noEmit": true,
     "allowImportingTsExtensions": true,

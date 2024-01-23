@@ -37,7 +37,9 @@ const Mdn: Command = {
 					`Got ${searchResult.status} ${searchResult.statusText} code trying to use CSE`,
 				);
 		} else {
-			const { items }: { items: SearchResult[] } = await searchResult.json();
+			const { items } = (await searchResult.json()) as {
+				items: SearchResult[];
+			};
 			interaction.respond(items.map(itemToChoice)).catch(console.error);
 		}
 	},
@@ -60,7 +62,7 @@ const Mdn: Command = {
 			const defer = interaction.deferReply();
 			const {
 				items: [quickSearch],
-			} = await search(query, 1).then((r) => r.json());
+			} = (await (await search(query, 1)).json()) as { items: SearchResult[] };
 			url = quickSearch.link;
 			await defer;
 		}

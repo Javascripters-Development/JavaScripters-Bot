@@ -1,24 +1,10 @@
 import loadCommands from "djs-fsrouter";
-import {
-	Client,
-	GatewayIntentBits,
-	Events,
-	type ClientEvents,
-	type Awaitable,
-} from "discord.js";
+import { Events, type ClientEvents, type Awaitable } from "discord.js";
 import { join } from "path";
 import { readdir } from "fs/promises";
 import { castArray } from "./utils.ts";
 import type { Listener } from "./types/listener.ts";
-
-const client = new Client({
-	intents: [
-		GatewayIntentBits.Guilds,
-		GatewayIntentBits.GuildMessages,
-		GatewayIntentBits.MessageContent,
-		GatewayIntentBits.GuildMembers,
-	],
-});
+import { client } from "./client.ts";
 
 client.once(Events.ClientReady, async (bot) => {
 	try {
