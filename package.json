@@ -20,6 +20,7 @@
 		"entities-decode": "^2.0.0",
 		"erlpack": "^0.1.4",
 		"utf-8-validate": "^6.0.3",
+		"valibot": "^0.25.0",
 		"zlib-sync": "^0.1.9"
 	},
 	"scripts": {
