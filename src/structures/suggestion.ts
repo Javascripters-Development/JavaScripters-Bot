@@ -379,7 +379,6 @@ export class Suggestion {
 					: suggestion.status === "REJECTED"
 					  ? Colors.Red
 					  : Colors.White,
-			title: `Suggestion #${suggestion.id}`,
 			description: suggestion.description ?? undefined,
 			fields,
 			author,
