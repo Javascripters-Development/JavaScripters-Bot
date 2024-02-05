@@ -1,6 +1,6 @@
-import db from "../../db.ts";
-import { Config } from "../../schemas/config.ts";
-import { LoggingWhitelist } from "../../schemas/loggingWhitelist.ts";
+import db from "./db.ts";
+import { Config } from "./schemas/config.ts";
+import { LoggingWhitelist } from "./schemas/loggingWhitelist.ts";
 import type { TextChannel, Guild, Role } from "discord.js";
 import { eq, and, sql } from "drizzle-orm";
 const { placeholder } = sql;
