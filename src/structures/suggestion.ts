@@ -30,6 +30,7 @@ import {
 	VOTE_BUTTON_ID,
 	getStatusAsVerb,
 } from "./suggestion-util.ts";
+import { truncate } from "../utils/common.ts";
 
 export const SUGGESTION_USER_ALREADY_VOTED = "UserAlreadyVoted";
 
@@ -314,7 +315,7 @@ export class Suggestion {
 
 		if (!message.hasThread)
 			await message.startThread({
-				name: messageOptions.embeds[0].data.title ?? "Suggestion",
+				name: truncate(description, 50),
 				reason: `New suggestion made by ${member.user.username}`,
 			});
 
