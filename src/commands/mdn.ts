@@ -11,7 +11,7 @@ type SearchResult = {
 	snippet: string;
 };
 
-const Info: Command = {
+const Mdn: Command = {
 	description: "Search the Modzilla Developer Network",
 	options: [
 		{
@@ -87,7 +87,7 @@ const Info: Command = {
 		}).catch(console.error);
 	},
 };
-export default Info;
+export default Mdn;
 
 const BASE_URL = `https://www.googleapis.com/customsearch/v1/siterestrict?key=${process.env.CSE_KEY}&cx=${process.env.CSE_CSX}`;
 

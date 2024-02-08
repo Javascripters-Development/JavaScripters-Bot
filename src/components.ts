@@ -1,5 +1,11 @@
-import { ComponentType, ButtonStyle } from "discord.js";
-const { ActionRow, StringSelect, Button } = ComponentType;
+import {
+	ComponentType,
+	ButtonStyle,
+	type ActionRowData,
+	type TextInputComponentData,
+	type ModalActionRowComponentData,
+} from "discord.js";
+const { ActionRow, StringSelect, Button, TextInput } = ComponentType;
 
 import type {
 	APIActionRowComponent,
@@ -42,5 +48,19 @@ export function buttonRow(
 			style: ButtonStyle.Primary,
 			...button,
 		})),
+	};
+}
+
+export function modalInput(
+	input: Omit<TextInputComponentData, "type">,
+): ActionRowData<ModalActionRowComponentData> {
+	return {
+		type: ActionRow,
+		components: [
+			{
+				...input,
+				type: TextInput,
+			},
+		],
 	};
 }
