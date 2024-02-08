@@ -10,7 +10,7 @@ export const SUGGESTION_STATUS = {
 } as const satisfies Record<string, string>;
 
 export type SuggestionStatus =
-	typeof SUGGESTION_STATUS[keyof typeof SUGGESTION_STATUS];
+	(typeof SUGGESTION_STATUS)[keyof typeof SUGGESTION_STATUS];
 export type UpdatedSuggestionStatus = Exclude<SuggestionStatus, "POSTED">;
 
 const SUGGESTION_STATUS_VALUES = Object.values(SUGGESTION_STATUS) as [
@@ -22,10 +22,11 @@ const SUGGESTION_STATUS_VALUES = Object.values(SUGGESTION_STATUS) as [
 export const Suggestion = sqliteTable("suggestion", {
 	id: int("id").primaryKey({ autoIncrement: true }).notNull(),
 
-	title: text("title").notNull(),
-	description: text("description"),
+	description: text("description").notNull(),
 
-	guildId: text("guildId").references(() => Config.id, { onDelete: 'cascade' }).notNull(),
+	guildId: text("guildId")
+		.references(() => Config.id, { onDelete: "cascade" })
+		.notNull(),
 	channelId: text("channelId").notNull(),
 	messageId: text("messageId").notNull(),
 	userId: text("userId").notNull(),

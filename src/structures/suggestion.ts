@@ -11,6 +11,7 @@ import {
 	ActionRowBuilder,
 	time,
 	ButtonStyle,
+	messageLink,
 } from "discord.js";
 import {
 	Suggestion as DbSuggestion,
@@ -29,12 +30,12 @@ import {
 	VOTE_BUTTON_ID,
 	getStatusAsVerb,
 } from "./suggestion-util.ts";
+import { truncate } from "../utils/common.ts";
 
 export const SUGGESTION_USER_ALREADY_VOTED = "UserAlreadyVoted";
 
 interface CreateSuggestionOptions {
-	title: string;
-	description?: string;
+	description: string;
 	channel: GuildTextBasedChannel;
 	member: GuildMember;
 	dbConfig: ConfigSelect;
@@ -213,16 +214,23 @@ export class Suggestion {
 	}
 
 	toString() {
-		return `Suggestion { id: ${this.data.id}; title: ${this.data.title} }`;
+		return `Suggestion { id: ${this.data.id} }`;
+	}
+
+	get id() {
+		return this.data.id;
+	}
+
+	/** The URL to the message. */
+	get url() {
+		const { guildId, channelId, messageId } = this.data;
+
+		return messageLink(guildId, channelId, messageId);
 	}
 
 	/** The user ID of the user who made the suggestion. */
 	get userId() {
 		return this.data.userId;
-	}
-
-	get title() {
-		return this.data.title;
 	}
 
 	get description() {
@@ -276,12 +284,11 @@ export class Suggestion {
 
 	/** Create a new suggestion. */
 	public static async create({
-		title,
 		description,
 		channel,
 		member,
 		dbConfig,
-	}: CreateSuggestionOptions): Promise<[Suggestion, string]> {
+	}: CreateSuggestionOptions): Promise<Suggestion> {
 		const embed = new EmbedBuilder({
 			title: `Loading suggestion from ${member.user.username}...`,
 		});
@@ -290,7 +297,6 @@ export class Suggestion {
 		const insertedRows = await db
 			.insert(DbSuggestion)
 			.values({
-				title,
 				description,
 
 				guildId: member.guild.id,
@@ -309,11 +315,11 @@ export class Suggestion {
 
 		if (!message.hasThread)
 			await message.startThread({
-				name: `Suggestion: ${title}`,
+				name: truncate(description, 50),
 				reason: `New suggestion made by ${member.user.username}`,
 			});
 
-		return [suggestion, message.url];
+		return suggestion;
 	}
 
 	/** Create the {@link Suggestion} instance from an existing suggestion {@link Message}. */
@@ -374,7 +380,6 @@ export class Suggestion {
 					: suggestion.status === "REJECTED"
 					  ? Colors.Red
 					  : Colors.White,
-			title: suggestion.title,
 			description: suggestion.description ?? undefined,
 			fields,
 			author,
