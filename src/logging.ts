@@ -22,17 +22,6 @@ export type LogConfig =
 			channel: TextChannel["id"];
 	  };
 
-const logModes = new Map<Guild["id"], LogConfig>();
-db.select()
-	.from(Config)
-	.then((configs) => {
-		for (const { id, loggingMode, loggingChannel } of configs)
-			logModes.set(id, {
-				mode: loggingMode || LogMode.NONE,
-				channel: loggingChannel,
-			});
-	});
-
 export function setLogging(
 	{ id }: Guild,
 	config: LogMode.NONE | { mode: LogMode; channel: TextChannel },
@@ -42,9 +31,6 @@ export function setLogging(
 	if (config) {
 		loggingMode = config.mode;
 		loggingChannel = config.channel.id;
-		logModes.set(id, { mode: config.mode, channel: loggingChannel });
-	} else {
-		logModes.set(id, { mode: LogMode.NONE, channel: null });
 	}
 
 	return db
@@ -57,8 +43,9 @@ export function setLogging(
 		.returning();
 }
 
-export function getConfig({ id }: Guild) {
-	return logModes.get(id);
+export function getConfig({ id }: { id: string }): LogConfig {
+	const { mode, channel } = selectConfig.all({ guildId: id })[0];
+	return { mode: mode || LogMode.NONE, channel };
 }
 
 export function getWhitelist({ id: guildId }: Guild) {
@@ -73,6 +60,12 @@ export function whitelistRole({ id, guild: { id: guildId } }: Role) {
 export async function unwhitelistRole({ id, guild: { id: guildId } }: Role) {
 	return await whitelistRole_remove.execute({ guildId, id });
 }
+
+const selectConfig = db
+	.select({ mode: Config.loggingMode, channel: Config.loggingChannel })
+	.from(Config)
+	.where(eq(Config.id, placeholder("guildId")))
+	.prepare();
 
 const whitelistRoles = db
 	.select({ id: LoggingWhitelist.roleId })
