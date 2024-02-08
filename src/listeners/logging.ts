@@ -1,10 +1,6 @@
 import { type Guild, Message, type APIEmbed } from "discord.js";
-import {
-	LogMode,
-	getConfig,
-	getWhitelist,
-	unwhitelistRole,
-} from "../logging.ts";
+import { getConfig, getWhitelist, unwhitelistRole } from "../logging.ts";
+import { LogMode } from "../types/logging.ts";
 import type { Listener } from "../types/listener.ts";
 
 export const deleteColor = 0xdd4444;

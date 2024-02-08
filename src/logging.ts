@@ -1,26 +1,10 @@
 import db from "./db.ts";
+import { LogMode, type LogConfig } from "./types/logging.ts";
 import { Config } from "./schemas/config.ts";
 import { LoggingWhitelist } from "./schemas/loggingWhitelist.ts";
 import type { TextChannel, Guild, Role } from "discord.js";
 import { eq, and, sql } from "drizzle-orm";
 const { placeholder } = sql;
-
-export enum LogMode {
-	NONE = 0,
-	DELETES = 1 << 0,
-	EDITS = 1 << 1,
-	"DELETES & EDITS" = DELETES | EDITS,
-}
-
-export type LogConfig =
-	| {
-			mode: LogMode.NONE;
-			channel: null;
-	  }
-	| {
-			mode: LogMode;
-			channel: TextChannel["id"];
-	  };
 
 export function setLogging(
 	{ id }: Guild,
@@ -45,7 +29,7 @@ export function setLogging(
 
 export function getConfig({ id }: { id: string }): LogConfig {
 	const { mode, channel } = selectConfig.all({ guildId: id })[0];
-	return { mode: mode || LogMode.NONE, channel };
+	return channel ? { mode, channel } : { mode: LogMode.NONE, channel };
 }
 
 export function getWhitelist({ id: guildId }: Guild) {
