@@ -33,7 +33,8 @@ const Purge: Command = {
 
 		if (!channel) {
 			return reply("Error: could not fetch the channel");
-		} else if (channel.isDMBased()) {
+		}
+		if (channel.isDMBased()) {
 			return reply("Error: can't do that in DMs!");
 		}
 		const {
