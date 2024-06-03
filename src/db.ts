@@ -8,7 +8,7 @@ sqlite.run("PRAGMA journal_mode = WAL");
 sqlite.run("PRAGMA optimize");
 
 const db = drizzle(sqlite, {
-	logger: process.env.ORM_DEBUG === "true",
+	logger: process.env.ORM_DEBUG === true,
 	schema: { ...Suggestion },
 });
 
