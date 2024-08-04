@@ -56,7 +56,6 @@ const manifest = createDatabaseConfigurationManifest(Config, [
 		description: "Message content when a user joins.",
 		column: "gatewayChannel",
 		type: "text",
-		// TODO: implement string placeholders
 		placeholder: "We hope you enjoy your stay!",
 		style: TextInputStyle.Paragraph,
 	},
@@ -95,7 +94,7 @@ const manifest = createDatabaseConfigurationManifest(Config, [
 			return Number.parseInt(value);
 		},
 		fromStore(value): string {
-			return (value as number).toString();
+			return value ? (value as number).toString() : "";
 		},
 	},
 	{

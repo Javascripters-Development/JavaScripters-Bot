@@ -1,14 +1,13 @@
 import type { InferInsertModel, InferSelectModel, Table } from "drizzle-orm";
 import { ConfigurationStore } from "./configuration-manifest.ts";
 import db from "../db.ts";
+import type { Snowflake } from "discord.js";
 
 interface DatabaseStoreWriteContext<T extends Table = Table> {
 	/** The table to execute queries on. */
 	table: T;
 	/** The table columns mapped to their new values. */
-	values: {
-		[Key in keyof InferInsertModel<T>]: InferInsertModel<T>[Key];
-	}[];
+	values: InferInsertModel<T>[];
 }
 
 interface DatabaseStoreReadContext<T extends Table = Table> {
@@ -16,6 +15,7 @@ interface DatabaseStoreReadContext<T extends Table = Table> {
 	table: T;
 	/** The table columns to select. */
 	columns: (keyof InferSelectModel<T>)[];
+	where?: Record<string, unknown>;
 }
 
 type GetSchemaColumn<
