@@ -4,6 +4,7 @@ import {
 	ChatInputCommandInteraction,
 	inlineCode,
 	InteractionResponse,
+	italic,
 	Message,
 	roleMention,
 	type BaseMessageOptions,
@@ -29,15 +30,9 @@ interface ConfigurationMessageOptions<T extends DrizzleTable = DrizzleTable> {
 }
 
 /** Represents a configuration message. */
-export class ConfigurationMessage<
-	Table extends DrizzleTable,
-	ManifestOption extends ConfigurationOption<
-		Table,
-		keyof InferSelectModel<Table>
-	>,
-> {
+export class ConfigurationMessage<Table extends DrizzleTable> {
 	#table: Table;
-	#manifest: ConfigurationOption<Table>[];
+	#manifest: ConfigurationOption<DrizzleTable>[];
 	#options: ConfigurationMessageOptions<Table>;
 
 	/** The {@link InteractionResponse} or {@link Message} for the current configuration message. */
@@ -47,7 +42,7 @@ export class ConfigurationMessage<
 
 	constructor(
 		table: Table,
-		manifest: ManifestOption[],
+		manifest: ConfigurationOption<DrizzleTable>[],
 		options: ConfigurationMessageOptions<Table>,
 	) {
 		this.#table = table;
@@ -134,10 +129,14 @@ export class ConfigurationMessage<
 				databaseValues[manifestOption.column],
 			);
 
-			content += `${bold(manifestOption.name)} — ${this.formatValue(
+			const nameFormatted = bold(manifestOption.name);
+			const descriptionFormatted = italic(manifestOption.description);
+			const valueFormatted = this.formatValue(
 				manifestOption.type,
 				databaseValue,
-			)}\n`;
+			);
+
+			content += `${nameFormatted} — ${valueFormatted}\n-# ${descriptionFormatted}\n\n`;
 		}
 
 		return {
@@ -146,9 +145,9 @@ export class ConfigurationMessage<
 	}
 
 	/** Get the raw or transformed (return value of {@link ConfigurationOption.fromDatabase|fromDatabase}) database value. */
-	private getOptionValue<T extends ConfigurationOption<Table>>(
+	private getOptionValue<T extends ConfigurationOption<DrizzleTable>>(
 		manifestOption: T,
-		value: InferSelectModel<Table>[T["column"]],
+		value: InferSelectModel<DrizzleTable>[T["column"]],
 	): unknown {
 		if (manifestOption.fromDatabase) return manifestOption.fromDatabase(value);
 

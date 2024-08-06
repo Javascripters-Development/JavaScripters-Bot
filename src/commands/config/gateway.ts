@@ -1,0 +1,75 @@
+import { PermissionFlagsBits, TextInputStyle } from "discord.js";
+import { Config } from "../../schemas/config.ts";
+import { createConfigurationManifest } from "../../structures/index.ts";
+import { ConfigurationMessage } from "../../structures/index.ts";
+import type { Command } from "djs-fsrouter";
+import { eq } from "drizzle-orm";
+import { checkIsValidTextChannel } from "../../utils/index.ts";
+
+const manifest = createConfigurationManifest(Config, [
+	{
+		name: "Gateway channel",
+		description: "New members will be welcomed here.",
+		column: "gatewayChannel",
+		type: "channel",
+		validate: checkIsValidTextChannel,
+	},
+	// Join
+	{
+		name: "Gateway join title",
+		description: "Message title when a user joins.",
+		column: "gatewayChannel",
+		type: "text",
+		// TODO: implement string placeholders
+		placeholder: "Welcome ${mention}!",
+	},
+	{
+		name: "Gateway join content",
+		description: "Message content when a user joins.",
+		column: "gatewayChannel",
+		type: "text",
+		placeholder: "We hope you enjoy your stay!",
+		style: TextInputStyle.Paragraph,
+	},
+	// Leave
+	{
+		name: "Gateway leave title",
+		description: "Message title when a user leaves.",
+		column: "gatewayChannel",
+		type: "text",
+		// TODO: implement string placeholders
+		placeholder: "Goodbye ${mention}!",
+	},
+	{
+		name: "Gateway leave content",
+		description: "Message content when a user leaves.",
+		column: "gatewayChannel",
+		type: "text",
+		// TODO: implement string placeholders
+		placeholder: "We are sorry to see you go ${mention}",
+		style: TextInputStyle.Paragraph,
+	},
+]);
+
+const ConfigCommand: Command = {
+	description: "Configure the gateway",
+	defaultMemberPermissions: PermissionFlagsBits.Administrator,
+	async run(interaction) {
+		if (!interaction.inGuild()) {
+			interaction.reply({
+				content: "Run this command in a server to get server info",
+				ephemeral: true,
+			});
+			return;
+		}
+
+		const configurationMessage = new ConfigurationMessage(Config, manifest, {
+			getWhereClause: ({ table, interaction }) =>
+				eq(table.id, interaction.guildId),
+		});
+
+		await configurationMessage.initialize(interaction);
+	},
+};
+
+export default ConfigCommand;
