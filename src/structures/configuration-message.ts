@@ -1,13 +1,28 @@
 import {
+	ActionRowBuilder,
 	bold,
+	ButtonBuilder,
+	ButtonStyle,
 	channelMention,
+	ChannelSelectMenuBuilder,
 	ChatInputCommandInteraction,
+	EmbedBuilder,
 	inlineCode,
 	InteractionResponse,
 	italic,
 	Message,
 	roleMention,
+	RoleSelectMenuBuilder,
+	StringSelectMenuBuilder,
+	type ActionRowComponent,
+	type AnyComponentBuilder,
+	type APIActionRowComponent,
+	type APIButtonComponent,
+	type APIMessageActionRowComponent,
+	type APISelectMenuComponent,
+	type APITextInputComponent,
 	type BaseMessageOptions,
+	type MessageActionRowComponentBuilder,
 } from "discord.js";
 import type {
 	ConfigurationOption,
@@ -101,6 +116,91 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 		this.#reply = await this.#reply.edit(messageOptions);
 	}
 
+	/** Get the action rows with components. */
+	private getActionRows(): APIActionRowComponent<APIMessageActionRowComponent>[] {
+		const actionRows: ActionRowBuilder<MessageActionRowComponentBuilder>[] = [
+			new ActionRowBuilder(),
+		];
+
+		for (const manifestOption of this.#manifest) {
+			const component = this.getActionRowComponent(manifestOption);
+
+			if (["select", "channel", "role"].includes(manifestOption.type)) {
+				const row =
+					new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+						component,
+					);
+
+				actionRows.push(row);
+			} else {
+				// Ensure that buttons are always in the first action row
+				actionRows[0].addComponents(component);
+			}
+		}
+
+		return actionRows.map((row) => row.toJSON());
+	}
+
+	/** Get the component for a manifest option. */
+	private getActionRowComponent(
+		manifestOption: ConfigurationOption<DrizzleTable>,
+	): MessageActionRowComponentBuilder {
+		const customId = `config-message-${manifestOption.name}`;
+
+		switch (manifestOption.type) {
+			case "text": {
+				const component = new ButtonBuilder()
+					.setCustomId(customId)
+					.setLabel(manifestOption.label ?? manifestOption.name)
+					.setStyle(ButtonStyle.Primary);
+
+				if (manifestOption.emoji) component.setEmoji(manifestOption.emoji);
+
+				return component;
+			}
+			case "boolean": {
+				const component = new ButtonBuilder()
+					.setCustomId(customId)
+					.setLabel(manifestOption.label ?? manifestOption.name);
+
+				if (manifestOption.emoji) component.setEmoji(manifestOption.emoji);
+
+				return component;
+			}
+			case "channel": {
+				const component = new ChannelSelectMenuBuilder()
+					.setCustomId(customId)
+					.setMaxValues(1);
+
+				if (manifestOption.placeholder)
+					component.setPlaceholder(manifestOption.placeholder);
+
+				return component;
+			}
+			case "role": {
+				const component = new RoleSelectMenuBuilder()
+					.setCustomId(customId)
+					.setMaxValues(1);
+
+				if (manifestOption.placeholder)
+					component.setPlaceholder(manifestOption.placeholder);
+
+				return component;
+			}
+			case "select": {
+				const component = new StringSelectMenuBuilder()
+					.setCustomId(customId)
+					.addOptions(manifestOption.options)
+					.setMaxValues(1);
+
+				if (manifestOption.placeholder)
+					component.setPlaceholder(manifestOption.placeholder);
+
+				return component;
+			}
+		}
+	}
+
 	/** Get the message options for the configuration message. */
 	private async getMessageOptions(
 		interaction: ChatInputCommandInteraction<"cached" | "raw">,
@@ -139,8 +239,15 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 			content += `${nameFormatted} — ${valueFormatted}\n-# ${descriptionFormatted}\n\n`;
 		}
 
+		const embed = new EmbedBuilder()
+			.setColor("Blue")
+			// Should be able to configure through the constructor
+			.setTitle("Configuration")
+			.setDescription(content.trim());
+
 		return {
-			content: content.trim(),
+			embeds: [embed],
+			components: this.getActionRows(),
 		};
 	}
 

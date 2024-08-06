@@ -13,7 +13,7 @@ const LogModeValues = Object.keys(LogMode).filter(
 
 const LogModeSelectOptions = Object.entries(LogMode)
 	.filter(([, value]) => typeof value === "number")
-	.map(([key, value]) => ({ name: key, value: value.toString() }));
+	.map(([key, value]) => ({ label: key, value: value.toString() }));
 
 const manifest = createConfigurationManifest(Config, [
 	{
@@ -21,6 +21,7 @@ const manifest = createConfigurationManifest(Config, [
 		description: "Determines what should be logged.",
 		column: "loggingMode",
 		type: "select",
+		placeholder: "Select a logging mode",
 		options: LogModeSelectOptions,
 		validate(value) {
 			if (!LogModeValues.includes(value))
@@ -40,6 +41,7 @@ const manifest = createConfigurationManifest(Config, [
 		description: "Log messages will be sent here.",
 		column: "loggingChannel",
 		type: "channel",
+		placeholder: "Select a logging channel",
 		validate: checkIsValidTextChannel,
 	},
 ]);

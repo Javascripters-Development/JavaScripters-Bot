@@ -12,6 +12,7 @@ const manifest = createConfigurationManifest(Config, [
 		description: "New members will be welcomed here.",
 		column: "gatewayChannel",
 		type: "channel",
+		placeholder: "Select a gateway channel",
 		validate: checkIsValidTextChannel,
 	},
 	// Join

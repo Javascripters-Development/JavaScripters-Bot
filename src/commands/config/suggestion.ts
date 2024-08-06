@@ -12,6 +12,7 @@ const manifest = createConfigurationManifest(Config, [
 		description: "Suggestions will be sent here.",
 		column: "suggestionChannel",
 		type: "channel",
+		placeholder: "Select a suggestion channel",
 		validate: checkIsValidTextChannel,
 	},
 	{
@@ -19,18 +20,23 @@ const manifest = createConfigurationManifest(Config, [
 		description: "The role that can approve and reject suggestions.",
 		column: "suggestionManagerRole",
 		type: "role",
+		placeholder: "Select a manager role",
 	},
 	{
 		name: "Suggestion upvote emoji",
 		description: "The emoji for upvoting suggestions.",
 		column: "suggestionUpvoteEmoji",
 		type: "text",
+		label: "Set upvote emoji",
+		emoji: "👍",
 	},
 	{
 		name: "Suggestion downvote emoji",
 		description: "The emoji for downvoting suggestions.",
 		column: "suggestionDownvoteEmoji",
 		type: "text",
+		label: "Set downvote emoji",
+		emoji: "👎",
 	},
 ]);
 

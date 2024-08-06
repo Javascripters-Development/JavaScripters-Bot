@@ -45,10 +45,24 @@ interface PartialConfigurationOption<
 	column: Column;
 }
 
+interface ButtonConfigurationOption<
+	Type extends ConfigurationOptionType,
+	Table extends DrizzleTable,
+	Column extends keyof InferSelectModel<Table>,
+> extends PartialConfigurationOption<Type, Table, Column> {
+	/**
+	 * The label to display in the button.\
+	 * **NOTE:** this will fallback to the {@link ConfigurationTextOption.name|name} property if not defined.
+	 */
+	label?: string;
+	/** The emoji to display in the button before the {@link label}. */
+	emoji?: string;
+}
+
 export interface ConfigurationTextOption<
 	Table extends DrizzleTable,
 	Column extends keyof InferSelectModel<Table>,
-> extends PartialConfigurationOption<"text", Table, Column> {
+> extends ButtonConfigurationOption<"text", Table, Column> {
 	type: "text";
 	placeholder?: string;
 	/**
@@ -62,7 +76,7 @@ export interface ConfigurationTextOption<
 export interface ConfigurationBooleanOption<
 	Table extends DrizzleTable,
 	Column extends keyof InferSelectModel<Table>,
-> extends PartialConfigurationOption<"boolean", Table, Column> {
+> extends ButtonConfigurationOption<"boolean", Table, Column> {
 	type: "boolean";
 }
 
@@ -71,6 +85,7 @@ export interface ConfigurationRoleOption<
 	Column extends keyof InferSelectModel<Table>,
 > extends PartialConfigurationOption<"role", Table, Column> {
 	type: "role";
+	placeholder?: string;
 }
 
 export interface ConfigurationChannelOption<
@@ -78,6 +93,7 @@ export interface ConfigurationChannelOption<
 	Column extends keyof InferSelectModel<Table>,
 > extends PartialConfigurationOption<"channel", Table, Column> {
 	type: "channel";
+	placeholder?: string;
 }
 
 export interface ConfigurationSelectOption<
@@ -85,8 +101,9 @@ export interface ConfigurationSelectOption<
 	Column extends keyof InferSelectModel<Table>,
 > extends PartialConfigurationOption<"select", Table, Column> {
 	type: "select";
+	placeholder?: string;
 	options: {
-		name: string;
+		label: string;
 		value: string;
 	}[];
 }
