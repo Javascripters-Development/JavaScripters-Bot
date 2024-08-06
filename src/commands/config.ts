@@ -1,13 +1,10 @@
 import { PermissionFlagsBits, TextInputStyle, type Channel } from "discord.js";
 import { Config } from "../schemas/config.ts";
-import {
-	createDatabaseConfigurationManifest,
-	type ConfigurationOptionPartial,
-} from "../structures/index.ts";
+import { createConfigurationManifest } from "../structures/index.ts";
 import { LogMode } from "../types/logging.ts";
-import { DatabaseStore, ConfigurationMessage } from "../structures/index.ts";
+import { ConfigurationMessage } from "../structures/index.ts";
 import type { Command } from "djs-fsrouter";
-import type { InferSelectModel } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const checkIsValidTextChannel = (channel: Channel) => {
 	if (channel.isDMBased()) return `${channel} must be a guild channel`;
@@ -32,9 +29,7 @@ const LogModeSelectOptions = Object.entries(LogMode)
 	.filter(([, value]) => typeof value === "number")
 	.map(([key, value]) => ({ name: key, value: value.toString() }));
 
-const store = new DatabaseStore();
-
-const manifest = createDatabaseConfigurationManifest(Config, [
+const manifest = createConfigurationManifest(Config, [
 	{
 		name: "Gateway channel",
 		description: "New members will be welcomed here.",
@@ -90,10 +85,10 @@ const manifest = createDatabaseConfigurationManifest(Config, [
 
 			return true;
 		},
-		toStore(value): number {
+		toDatabase(value): number {
 			return Number.parseInt(value);
 		},
-		fromStore(value): string {
+		fromDatabase(value): string {
 			return value ? (value as number).toString() : "";
 		},
 	},
@@ -130,10 +125,7 @@ const manifest = createDatabaseConfigurationManifest(Config, [
 		column: "suggestionDownvoteEmoji",
 		type: "text",
 	},
-] satisfies ConfigurationOptionPartial<
-	keyof InferSelectModel<typeof Config>,
-	DatabaseStore
->[]);
+]);
 
 const ConfigCommand: Command = {
 	description: "Configure the bot",
@@ -147,7 +139,10 @@ const ConfigCommand: Command = {
 			return;
 		}
 
-		const configurationMessage = new ConfigurationMessage(store, manifest);
+		const configurationMessage = new ConfigurationMessage(Config, manifest, {
+			getWhereClause: ({ table, interaction }) =>
+				eq(table.id, interaction.guildId),
+		});
 
 		await configurationMessage.initialize(interaction);
 	},

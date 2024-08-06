@@ -1,6 +1,5 @@
 import type { InferSelectModel, Table as DrizzleTable } from "drizzle-orm";
 import type { Channel, Role, TextInputStyle } from "discord.js";
-import { DatabaseStore } from "./database-store.ts";
 
 interface ConfigurationOptionTypeMap {
 	text: string;
@@ -15,43 +14,41 @@ export type ConfigurationOptionType = keyof ConfigurationOptionTypeMap;
 type ConfigurationOptionValidateFn<T = unknown> = (
 	value: T,
 ) => boolean | string;
-type ConfigurationOptionToStoreFn<T = unknown> = (value: T) => unknown;
-type ConfigurationOptionFromStoreFn<T = unknown> = (value: unknown) => T;
-
-/** Represents a data storage. */
-// biome-ignore lint/suspicious/noExplicitAny: context type will be decided by the store
-export abstract class ConfigurationStore<W = any, R = any> {
-	/** Write data to the store. */
-	abstract write(context: W): void | Promise<void>;
-	/** Read data from the store. */
-	abstract read(context: R): unknown | Promise<unknown>;
-}
-
-/** Helper type to extract the read context from the {@link ConfigurationStore}. */
-export type InferStoreReadContext<T extends ConfigurationStore> = Parameters<
-	T["read"]
->[0];
+type ConfigurationOptionToDatabaseFn<T = unknown, U = unknown> = (
+	value: U,
+) => T;
+type ConfigurationOptionFromDatabaseFn<T = unknown> = (value: T) => unknown;
 
 interface PartialConfigurationOption<
-	T extends ConfigurationOptionType = "text",
-	U = unknown,
+	Type extends ConfigurationOptionType,
+	Table extends DrizzleTable,
+	Column extends keyof InferSelectModel<Table>,
 > {
 	name: string;
 	description: string;
 	/** @default 'text' */
-	type?: T;
+	type?: Type;
 	/** Validate the input, validation succeeds when `true` is returned. */
-	validate?: ConfigurationOptionValidateFn<ConfigurationOptionTypeMap[T]>;
-	/** Transform value when persisting to the store. */
-	toStore?: ConfigurationOptionToStoreFn<ConfigurationOptionTypeMap[T]>;
-	/** Transform value when retrieving from the store. */
-	fromStore?: ConfigurationOptionFromStoreFn<ConfigurationOptionTypeMap[T]>;
-	/** The context to pass to the {@link ConfigurationStore}. */
-	storeContext: U;
+	validate?: ConfigurationOptionValidateFn<ConfigurationOptionTypeMap[Type]>;
+	/** Transform the value when persisting to the database. */
+	toDatabase?: ConfigurationOptionToDatabaseFn<
+		InferSelectModel<Table>[Column],
+		ConfigurationOptionTypeMap[Type]
+	>;
+	/** Transform the value when retrieving from the database. */
+	fromDatabase?: ConfigurationOptionFromDatabaseFn<
+		InferSelectModel<Table>[Column]
+	>;
+	/** The table to execute queries on. */
+	table: Table;
+	/** The column to execute queries on. */
+	column: Column;
 }
 
-export interface ConfigurationTextOption<U = unknown>
-	extends PartialConfigurationOption<"text", U> {
+export interface ConfigurationTextOption<
+	Table extends DrizzleTable,
+	Column extends keyof InferSelectModel<Table>,
+> extends PartialConfigurationOption<"text", Table, Column> {
 	type: "text";
 	placeholder?: string;
 	/**
@@ -62,23 +59,31 @@ export interface ConfigurationTextOption<U = unknown>
 	style?: TextInputStyle;
 }
 
-export interface ConfigurationBooleanOption<U = unknown>
-	extends PartialConfigurationOption<"boolean", U> {
+export interface ConfigurationBooleanOption<
+	Table extends DrizzleTable,
+	Column extends keyof InferSelectModel<Table>,
+> extends PartialConfigurationOption<"boolean", Table, Column> {
 	type: "boolean";
 }
 
-export interface ConfigurationRoleOption<U = unknown>
-	extends PartialConfigurationOption<"role", U> {
+export interface ConfigurationRoleOption<
+	Table extends DrizzleTable,
+	Column extends keyof InferSelectModel<Table>,
+> extends PartialConfigurationOption<"role", Table, Column> {
 	type: "role";
 }
 
-export interface ConfigurationChannelOption<U = unknown>
-	extends PartialConfigurationOption<"channel", U> {
+export interface ConfigurationChannelOption<
+	Table extends DrizzleTable,
+	Column extends keyof InferSelectModel<Table>,
+> extends PartialConfigurationOption<"channel", Table, Column> {
 	type: "channel";
 }
 
-export interface ConfigurationSelectOption<U = unknown>
-	extends PartialConfigurationOption<"select", U> {
+export interface ConfigurationSelectOption<
+	Table extends DrizzleTable,
+	Column extends keyof InferSelectModel<Table>,
+> extends PartialConfigurationOption<"select", Table, Column> {
 	type: "select";
 	options: {
 		name: string;
@@ -86,41 +91,28 @@ export interface ConfigurationSelectOption<U = unknown>
 	}[];
 }
 
-export type ConfigurationOption<U = unknown> =
-	| ConfigurationTextOption<U>
-	| ConfigurationBooleanOption<U>
-	| ConfigurationRoleOption<U>
-	| ConfigurationChannelOption<U>
-	| ConfigurationSelectOption<U>;
+export type ConfigurationOption<
+	Table extends DrizzleTable = DrizzleTable,
+	Column extends keyof InferSelectModel<Table> = keyof InferSelectModel<Table>,
+> =
+	| ConfigurationTextOption<Table, Column>
+	| ConfigurationBooleanOption<Table, Column>
+	| ConfigurationRoleOption<Table, Column>
+	| ConfigurationChannelOption<Table, Column>
+	| ConfigurationSelectOption<Table, Column>;
 
 type OmitUnion<T, K extends keyof T> = T extends object ? Omit<T, K> : never;
 
-export type ConfigurationOptionPartial<
-	T extends string,
-	U extends ConfigurationStore,
-> = OmitUnion<ConfigurationOption<InferStoreReadContext<U>>, "storeContext"> & {
-	column: T;
-};
-
 /** Create a configuration manifest for {@link DatabaseStore}. */
-export const createDatabaseConfigurationManifest = <
-	Table extends DrizzleTable,
-	Option extends ConfigurationOptionPartial<
-		keyof InferSelectModel<Table>,
-		DatabaseStore
-	>,
+export const createConfigurationManifest = <
+	const Table extends DrizzleTable,
+	const Column extends keyof InferSelectModel<Table>,
 >(
 	table: Table,
-	options: Option[],
+	options: OmitUnion<ConfigurationOption<Table, Column>, "table">[],
 ) => {
-	return options.map(
-		(option) =>
-			({
-				...option,
-				storeContext: {
-					table,
-					columns: [option.column],
-				},
-			}) as ConfigurationOption<InferStoreReadContext<DatabaseStore>>,
-	);
+	return options.map((options) => ({
+		table,
+		...options,
+	}));
 };

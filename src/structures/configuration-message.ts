@@ -2,54 +2,125 @@ import {
 	bold,
 	channelMention,
 	ChatInputCommandInteraction,
+	inlineCode,
+	InteractionResponse,
+	Message,
 	roleMention,
 	type BaseMessageOptions,
 } from "discord.js";
 import type {
 	ConfigurationOption,
-	InferStoreReadContext,
+	ConfigurationOptionType,
 } from "./configuration-manifest.ts";
-import type { DatabaseStore } from "./database-store.ts";
-import { Config, type ConfigSelect } from "../schemas/config.ts";
 import db from "../db.ts";
-import { eq, type Table } from "drizzle-orm";
+import { Table as DrizzleTable, SQL, type InferSelectModel } from "drizzle-orm";
+import type { GetSelectTableSelection } from "drizzle-orm/query-builders/select.types";
+
+interface GetMessageOptionsContext<T extends DrizzleTable> {
+	table: T;
+	interaction: ChatInputCommandInteraction<"cached" | "raw">;
+}
+
+interface ConfigurationMessageOptions<T extends DrizzleTable = DrizzleTable> {
+	/** Dynamically create the where clause for the database query. */
+	getWhereClause: (
+		context: GetMessageOptionsContext<T>,
+	) => SQL<unknown> | ((aliases: GetSelectTableSelection<T>) => SQL);
+}
 
 /** Represents a configuration message. */
 export class ConfigurationMessage<
-	Store extends DatabaseStore,
-	ManifestOption extends ConfigurationOption<InferStoreReadContext<Store>>,
+	Table extends DrizzleTable,
+	ManifestOption extends ConfigurationOption<
+		Table,
+		keyof InferSelectModel<Table>
+	>,
 > {
-	#store: Store;
-	#manifest: ConfigurationOption<InferStoreReadContext<Store>>[];
+	#table: Table;
+	#manifest: ConfigurationOption<Table>[];
+	#options: ConfigurationMessageOptions<Table>;
 
-	constructor(store: Store, manifest: ManifestOption[]) {
-		this.#store = store;
+	/** The {@link InteractionResponse} or {@link Message} for the current configuration message. */
+	#reply: Message | InteractionResponse | null = null;
+
+	#initialized = false;
+
+	constructor(
+		table: Table,
+		manifest: ManifestOption[],
+		options: ConfigurationMessageOptions<Table>,
+	) {
+		this.#table = table;
 		this.#manifest = manifest;
+		this.#options = options;
 	}
 
 	/** Reply with the configuration message and listen to component interactions. */
-	public async initialize(interaction: ChatInputCommandInteraction) {
-		if (!interaction.inGuild()) return;
+	public async initialize(
+		interaction: ChatInputCommandInteraction,
+	): Promise<void> {
+		if (!interaction.inGuild() || this.#initialized) return;
 
-		const messageOptions = await this.getMessageOptions(interaction.guildId);
+		const messageOptions = await this.getMessageOptions(interaction);
+
+		return this.replyOrEdit(interaction, messageOptions);
+	}
+
+	/** Stop listening to component interactions and clean up internal state. */
+	public async destroy() {
+		if (!this.#initialized) return;
+
+		this.#reply = null;
+	}
+
+	/** Reply to a message or edit the reply if the interaction got replied to or is deferred and keep reply in memory. */
+	private async replyOrEdit(
+		interaction: ChatInputCommandInteraction,
+		messageOptions: BaseMessageOptions,
+	): Promise<void> {
+		let replyPromise: Promise<Message | InteractionResponse>;
 
 		if (interaction.replied || interaction.deferred) {
-			return interaction.editReply(messageOptions);
+			replyPromise = interaction.editReply(messageOptions);
+		} else {
+			replyPromise = interaction.reply(messageOptions);
 		}
 
-		return interaction.reply(messageOptions);
+		try {
+			const messageOrInteractionResponse = await replyPromise;
+
+			this.#reply = messageOrInteractionResponse;
+		} catch (error) {
+			await interaction.followUp("Something went wrong... Try again later");
+			this.destroy();
+		}
+	}
+
+	/** Update the reply message. */
+	private async updateReply(messageOptions: BaseMessageOptions): Promise<void> {
+		if (!this.#reply)
+			throw new Error(
+				"No internal reply message or interaction response available",
+			);
+
+		this.#reply = await this.#reply.edit(messageOptions);
 	}
 
 	/** Get the message options for the configuration message. */
-	protected async getMessageOptions(
-		guildId: string,
+	private async getMessageOptions(
+		interaction: ChatInputCommandInteraction<"cached" | "raw">,
 	): Promise<BaseMessageOptions> {
 		let content = "";
 
+		const whereClause = this.#options.getWhereClause({
+			table: this.#table,
+			interaction,
+		});
+
 		const databaseValues = db
 			.select()
-			.from(Config)
-			.where(eq(Config.id, guildId))
+			.from(this.#table)
+			.where(whereClause)
 			.all()
 			// TEMP: use .all() and select the first row manually, .get() does not work
 			.at(0);
@@ -60,9 +131,7 @@ export class ConfigurationMessage<
 		for (const manifestOption of this.#manifest) {
 			const databaseValue = this.getOptionValue(
 				manifestOption,
-				databaseValues[
-					manifestOption.storeContext.columns[0] as keyof typeof databaseValues
-				],
+				databaseValues[manifestOption.column],
 			);
 
 			content += `${bold(manifestOption.name)} — ${this.formatValue(
@@ -76,16 +145,18 @@ export class ConfigurationMessage<
 		};
 	}
 
-	protected getOptionValue(
-		manifestOption: ConfigurationOption<InferStoreReadContext<Store>>,
-		value: unknown,
-	) {
-		if (manifestOption.fromStore) return manifestOption.fromStore(value);
+	/** Get the raw or transformed (return value of {@link ConfigurationOption.fromDatabase|fromDatabase}) database value. */
+	private getOptionValue<T extends ConfigurationOption<Table>>(
+		manifestOption: T,
+		value: InferSelectModel<Table>[T["column"]],
+	): unknown {
+		if (manifestOption.fromDatabase) return manifestOption.fromDatabase(value);
 
 		return value;
 	}
 
-	protected formatValue(type: ConfigurationOption["type"], value: unknown) {
+	/** Format the value to display in an embed. */
+	private formatValue(type: ConfigurationOptionType, value: unknown): string {
 		const notSetValue = "(Not set)";
 
 		switch (type) {
@@ -96,7 +167,7 @@ export class ConfigurationMessage<
 			case "role":
 				return value ? roleMention(value as string) : notSetValue;
 			default:
-				return value ? (value as string) : notSetValue;
+				return value ? inlineCode(value as string) : notSetValue;
 		}
 	}
 }
