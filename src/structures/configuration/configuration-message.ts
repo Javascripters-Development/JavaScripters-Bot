@@ -6,37 +6,63 @@ import {
 	channelMention,
 	ChannelSelectMenuBuilder,
 	ChatInputCommandInteraction,
+	codeBlock,
+	DiscordjsError,
+	DiscordjsErrorCodes,
 	EmbedBuilder,
 	inlineCode,
 	InteractionResponse,
 	italic,
 	Message,
+	MessageComponentInteraction,
+	ModalBuilder,
+	ModalSubmitInteraction,
 	roleMention,
 	RoleSelectMenuBuilder,
 	StringSelectMenuBuilder,
+	TextInputBuilder,
+	TextInputStyle,
 	type APIActionRowComponent,
 	type APIMessageActionRowComponent,
 	type BaseMessageOptions,
+	type CollectedInteraction,
 	type MessageActionRowComponentBuilder,
+	type ModalActionRowComponentBuilder,
 } from "discord.js";
 import type {
 	ConfigurationOption,
 	ConfigurationOptionType,
 } from "./configuration-manifest.ts";
-import db from "../db.ts";
-import { Table as DrizzleTable, SQL, type InferSelectModel } from "drizzle-orm";
-import type { GetSelectTableSelection } from "drizzle-orm/query-builders/select.types";
+import db from "../../db.ts";
+import {
+	and,
+	Table as DrizzleTable,
+	eq,
+	SQL,
+	type InferSelectModel,
+} from "drizzle-orm";
+import { Time } from "../../utils.ts";
+import { truncate } from "../../utils/common.ts";
+import { handleInteractionCollect } from "./interaction-handlers.ts";
+import { getCustomId } from "./utils.ts";
 
 interface GetMessageOptionsContext<T extends DrizzleTable> {
 	table: T;
-	interaction: ChatInputCommandInteraction<"cached" | "raw">;
+	interaction:
+		| ChatInputCommandInteraction<"cached" | "raw">
+		| CollectedInteraction<"cached" | "raw">
+		| MessageComponentInteraction<"cached" | "raw">;
 }
 
 interface ConfigurationMessageOptions<T extends DrizzleTable = DrizzleTable> {
 	/** Dynamically create the where clause for the database query. */
-	getWhereClause: (
-		context: GetMessageOptionsContext<T>,
-	) => SQL<unknown> | ((aliases: GetSelectTableSelection<T>) => SQL);
+	getWhereClause: (context: GetMessageOptionsContext<T>) => SQL<unknown>;
+	/**
+	 * How long will this configuration message be interactable.
+	 *
+	 * @default 600_000 // 10 minutes
+	 */
+	expiresInMs?: number;
 }
 
 /** Represents a configuration message. */
@@ -49,6 +75,9 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 	#reply: Message | InteractionResponse | null = null;
 
 	#initialized = false;
+
+	/** The text for configuration options that aren't set */
+	#notSetText = italic("(Not set)");
 
 	constructor(
 		table: Table,
@@ -68,7 +97,9 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 		const messageOptions = await this.getMessageOptions(interaction);
 
-		return this.replyOrEdit(interaction, messageOptions);
+		await this.replyOrEdit(interaction, messageOptions);
+
+		await this.initializeListeners();
 	}
 
 	/** Stop listening to component interactions and clean up internal state. */
@@ -76,6 +107,94 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 		if (!this.#initialized) return;
 
 		this.#reply = null;
+	}
+
+	/** Add the component interaction listeners. */
+	private initializeListeners() {
+		const manifestOptionMap = Object.fromEntries(
+			this.#manifest.map((option) => [getCustomId(option), option]),
+		);
+
+		if (!this.#reply)
+			throw new Error(
+				"No internal reply message or interaction response available",
+			);
+
+		const collector = this.#reply.createMessageComponentCollector({
+			filter: async (interaction) => {
+				const isValidCustomId = Object.keys(manifestOptionMap).includes(
+					interaction.customId,
+				);
+				const message = await this.getReplyMessage();
+				const isReplyAuthor = message.author.id === interaction.user.id;
+
+				return isValidCustomId || isReplyAuthor;
+			},
+			time: Time.Minute * 10,
+		});
+
+		collector.on("collect", async (interaction) => {
+			if (!interaction.inGuild())
+				throw new Error("Interaction happened outside a guild");
+
+			this.handleInteractionCollect(
+				interaction,
+				manifestOptionMap[interaction.customId],
+			);
+		});
+	}
+
+	/** Get the {@link Message} for the configuration message reply. */
+	private async getReplyMessage() {
+		if (!this.#reply)
+			throw new Error(
+				"No internal reply message or interaction response available",
+			);
+
+		return this.#reply instanceof Message ? this.#reply : this.#reply.fetch();
+	}
+
+	private async handleInteractionCollect(
+		interaction: MessageComponentInteraction<"cached" | "raw">,
+		manifestOption: ConfigurationOption<DrizzleTable>,
+	) {
+		const whereClause = this.#options.getWhereClause({
+			table: this.#table,
+			interaction,
+		});
+
+		const { value } = db
+			.select({
+				value: this.#table[manifestOption.column as keyof object],
+			})
+			.from(this.#table)
+			.where(and(whereClause))
+			.all()
+			// TEMP: use .all() and select the first row manually, .get() does not work
+			.at(0) as { value: unknown };
+
+		const handleCollectResult = await handleInteractionCollect(
+			interaction,
+			manifestOption,
+			value,
+		);
+
+		if (handleCollectResult === null) return;
+
+		const [followUpInteraction, updatedValue] = handleCollectResult;
+
+		db.update(this.#table)
+			.set({
+				[manifestOption.column as keyof object]: updatedValue
+					? updatedValue
+					: null,
+			})
+			.where(whereClause)
+			.run();
+
+		const messageOptions = await this.getMessageOptions(followUpInteraction);
+
+		this.updateReply(messageOptions);
 	}
 
 	/** Reply to a message or edit the reply if the interaction got replied to or is deferred and keep reply in memory. */
@@ -140,7 +259,7 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 	private getActionRowComponent(
 		manifestOption: ConfigurationOption<DrizzleTable>,
 	): MessageActionRowComponentBuilder {
-		const customId = `config-message-${manifestOption.name}`;
+		const customId = getCustomId(manifestOption);
 
 		switch (manifestOption.type) {
 			case "text": {
@@ -166,6 +285,8 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 				const component = new ChannelSelectMenuBuilder()
 					.setCustomId(customId)
 					.setMaxValues(1);
+
+				// TODO: set channel type
 
 				if (manifestOption.placeholder)
 					component.setPlaceholder(manifestOption.placeholder);
@@ -198,7 +319,9 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 	/** Get the message options for the configuration message. */
 	private async getMessageOptions(
-		interaction: ChatInputCommandInteraction<"cached" | "raw">,
+		interaction:
+			| ChatInputCommandInteraction<"cached" | "raw">
+			| CollectedInteraction<"cached" | "raw">,
 	): Promise<BaseMessageOptions> {
 		let content = "";
 
@@ -226,12 +349,24 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 			const nameFormatted = bold(manifestOption.name);
 			const descriptionFormatted = italic(manifestOption.description);
-			const valueFormatted = this.formatValue(
-				manifestOption.type,
-				databaseValue,
-			);
 
-			content += `${nameFormatted} — ${valueFormatted}\n-# ${descriptionFormatted}\n\n`;
+			if (
+				manifestOption.type === "text" &&
+				manifestOption.style === TextInputStyle.Paragraph
+			) {
+				const valueFormatted = databaseValue
+					? codeBlock(truncate(databaseValue as string, 40))
+					: this.#notSetText;
+
+				content += `${nameFormatted}\n-# ${descriptionFormatted}\n${valueFormatted}\n`;
+			} else {
+				const valueFormatted = this.formatValue(
+					manifestOption.type,
+					databaseValue,
+				);
+
+				content += `${nameFormatted} — ${valueFormatted}\n-# ${descriptionFormatted}\n\n`;
+			}
 		}
 
 		const embed = new EmbedBuilder()
@@ -258,17 +393,18 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 	/** Format the value to display in an embed. */
 	private formatValue(type: ConfigurationOptionType, value: unknown): string {
-		const notSetValue = "(Not set)";
-
 		switch (type) {
-			case "boolean":
-				return (value as boolean) ? "Yes" : "No";
+			case "boolean": {
+				if (typeof value !== "boolean") return this.#notSetText;
+
+				return value ? "Yes" : "No";
+			}
 			case "channel":
-				return value ? channelMention(value as string) : notSetValue;
+				return value ? channelMention(value as string) : this.#notSetText;
 			case "role":
-				return value ? roleMention(value as string) : notSetValue;
+				return value ? roleMention(value as string) : this.#notSetText;
 			default:
-				return value ? inlineCode(value as string) : notSetValue;
+				return value ? inlineCode(value as string) : this.#notSetText;
 		}
 	}
 }

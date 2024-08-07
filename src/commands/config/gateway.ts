@@ -19,7 +19,7 @@ const manifest = createConfigurationManifest(Config, [
 	{
 		name: "Gateway join title",
 		description: "Message title when a user joins.",
-		column: "gatewayChannel",
+		column: "gatewayJoinTitle",
 		type: "text",
 		// TODO: implement string placeholders
 		placeholder: "Welcome ${mention}!",
@@ -27,7 +27,7 @@ const manifest = createConfigurationManifest(Config, [
 	{
 		name: "Gateway join content",
 		description: "Message content when a user joins.",
-		column: "gatewayChannel",
+		column: "gatewayJoinContent",
 		type: "text",
 		placeholder: "We hope you enjoy your stay!",
 		style: TextInputStyle.Paragraph,
@@ -36,7 +36,7 @@ const manifest = createConfigurationManifest(Config, [
 	{
 		name: "Gateway leave title",
 		description: "Message title when a user leaves.",
-		column: "gatewayChannel",
+		column: "gatewayLeaveTitle",
 		type: "text",
 		// TODO: implement string placeholders
 		placeholder: "Goodbye ${mention}!",
@@ -44,7 +44,7 @@ const manifest = createConfigurationManifest(Config, [
 	{
 		name: "Gateway leave content",
 		description: "Message content when a user leaves.",
-		column: "gatewayChannel",
+		column: "gatewayLeaveContent",
 		type: "text",
 		// TODO: implement string placeholders
 		placeholder: "We are sorry to see you go ${mention}",
