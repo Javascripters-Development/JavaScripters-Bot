@@ -14,13 +14,8 @@ import {
 	roleMention,
 	RoleSelectMenuBuilder,
 	StringSelectMenuBuilder,
-	type ActionRowComponent,
-	type AnyComponentBuilder,
 	type APIActionRowComponent,
-	type APIButtonComponent,
 	type APIMessageActionRowComponent,
-	type APISelectMenuComponent,
-	type APITextInputComponent,
 	type BaseMessageOptions,
 	type MessageActionRowComponentBuilder,
 } from "discord.js";
