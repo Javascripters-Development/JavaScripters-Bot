@@ -12,10 +12,7 @@ export const Config = sqliteTable("guildConfig", {
 	gatewayLeaveTitle: text("gatewayLeaveTitle"),
 	gatewayLeaveContent: text("gatewayLeaveContent"),
 
-	loggingMode: integer("loggingMode", { mode: "number" })
-		.$type<LogMode>()
-		.notNull()
-		.default(LogMode.NONE),
+	loggingMode: integer("loggingMode", { mode: "number" }).$type<LogMode>().notNull().default(LogMode.NONE),
 	loggingChannel: text("loggingChannel").default(""),
 
 	suggestionChannel: text("suggestionChannel"),

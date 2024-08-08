@@ -53,12 +53,8 @@ const Mdn: Command = {
 			: `${MDN_ROOT}${search(query, 1)[0]?.url}`;
 
 		const crawler = await scrape(url);
-		const intro = crawler(
-			".main-page-content > .section-content:first-of-type > *",
-		);
-		const links = crawler(
-			".main-page-content > .section-content:first-of-type a",
-		);
+		const intro = crawler(".main-page-content > .section-content:first-of-type > *");
+		const links = crawler(".main-page-content > .section-content:first-of-type a");
 		Array.prototype.forEach.call(links, makeLinkAbsolute);
 		let title: string = crawler("head title").text();
 		if (title.endsWith(" | MDN")) title = title.slice(0, -6);
@@ -97,15 +93,13 @@ setInterval(refreshIndex, 3600_000 * REFRESH_INTERVAL);
 
 function search(term: string, limit = 10) {
 	if (!Number.isInteger(limit) || limit < 1 || limit > 10)
-		throw new RangeError(
-			`The number of results must be an integer between 1 and 10, inclusive (got ${limit}).`,
-		);
+		throw new RangeError(`The number of results must be an integer between 1 and 10, inclusive (got ${limit}).`);
 
 	return searcher.search(term, limit).map((id) => index[id as number]);
 }
 
 function itemToChoice({ title, url }: IndexEntry) {
-	const category = url.match(/^\/en-US\/docs\/([^\/]+)\//)?.[1] || "Web";
+	const category = url.match(/^\/en-US\/docs\/([^/]+)\//)?.[1] || "Web";
 	if (category !== "Web") title += ` - ${category}`;
 	return {
 		name: truncate(title, 100),

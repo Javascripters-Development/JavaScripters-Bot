@@ -53,8 +53,7 @@ const ConfigCommand: Command = {
 		}
 
 		const configurationMessage = new ConfigurationMessage(Config, manifest, {
-			getWhereClause: ({ table, interaction }) =>
-				eq(table.id, interaction.guildId),
+			getWhereClause: ({ table, interaction }) => eq(table.id, interaction.guildId),
 		});
 
 		await configurationMessage.initialize(interaction);

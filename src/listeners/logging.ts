@@ -6,7 +6,7 @@ import type { Listener } from "../types/listener.ts";
 export const deleteColor = 0xdd4444;
 export const editColor = 0xdd6d0c;
 
-export default [
+export default ([
 	{
 		event: "messageDelete",
 		async handler(message) {
@@ -17,10 +17,7 @@ export default [
 			const embed = {
 				...msgDeletionEmbed(message),
 				description:
-					`**🗑️ Message from ${message.author} deleted in ${message.channel}**\n\n${message.content}`.substring(
-						0,
-						2056,
-					),
+					`**🗑️ Message from ${message.author} deleted in ${message.channel}**\n\n${message.content}`.substring(0, 2056),
 				timestamp: new Date().toISOString(),
 			};
 			channel.send({ embeds: [embed] }).catch(console.error);
@@ -30,17 +27,11 @@ export default [
 		event: "messageDeleteBulk",
 		async handler(messages) {
 			const first = messages.first();
-			const channel = await getLogChannel(
-				first?.guild || null,
-				LogMode.DELETES,
-			);
+			const channel = await getLogChannel(first?.guild || null, LogMode.DELETES);
 			if (!channel?.isTextBased()) return;
 
 			const embeds = messages
-				.filter(
-					(message): message is Message =>
-						!message.partial && !shouldIgnore(message),
-				)
+				.filter((message): message is Message => !message.partial && !shouldIgnore(message))
 				.map(msgDeletionEmbed);
 
 			if (!embeds.length) return;
@@ -95,7 +86,7 @@ export default [
 		event: "roleDelete",
 		handler: unwhitelistRole,
 	},
-] as Listener[];
+] as Listener[]);
 
 /**
  * Tells if the logging system should ignore the given message.

@@ -34,14 +34,8 @@ const handleTextInteractionCollect = async (
 		.setPlaceholder(manifestOption.placeholder ?? "")
 		.setStyle(manifestOption.style ?? TextInputStyle.Short);
 
-	const actionRow =
-		new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-			modalInput,
-		);
-	const modal = new ModalBuilder()
-		.setTitle(manifestOption.name)
-		.setCustomId(modalCustomId)
-		.addComponents(actionRow);
+	const actionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(modalInput);
+	const modal = new ModalBuilder().setTitle(manifestOption.name).setCustomId(modalCustomId).addComponents(actionRow);
 
 	await interaction.showModal(modal);
 
@@ -54,8 +48,7 @@ const handleTextInteractionCollect = async (
 		if (
 			error instanceof DiscordjsError &&
 			error.code === DiscordjsErrorCodes.InteractionCollectorError &&
-			error.message ===
-				"Collector received no interactions before ending with reason: time"
+			error.message === "Collector received no interactions before ending with reason: time"
 		)
 			return null;
 
@@ -84,8 +77,7 @@ export const handleInteractionCollect = async (
 		// Return early because the component timed out
 		if (modalSubmitInteraction === null) return null;
 
-		updatedValue =
-			modalSubmitInteraction?.fields.getTextInputValue(modalInputCustomId);
+		updatedValue = modalSubmitInteraction?.fields.getTextInputValue(modalInputCustomId);
 		followUpInteraction = modalSubmitInteraction;
 	}
 

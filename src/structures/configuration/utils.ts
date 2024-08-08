@@ -6,10 +6,7 @@ import type { ConfigurationOption } from "./configuration-manifest.ts";
  *
  * @private
  */
-export const getCustomId = (
-	manifestOption: ConfigurationOption<Table>,
-	suffix?: string,
-) => {
+export const getCustomId = (manifestOption: ConfigurationOption<Table>, suffix?: string) => {
 	const _suffix = suffix ? `-${suffix}` : "";
 
 	return `config-message-${manifestOption.column}${_suffix}`;

@@ -1,16 +1,11 @@
 import type { Listener } from "../types/listener.ts";
 import { customId } from "../commands/delete-and-warn.ts";
 
-export default [
+export default ([
 	{
 		event: "interactionCreate",
 		async handler(interaction) {
-			if (
-				!interaction.isModalSubmit() ||
-				!interaction.customId.endsWith(customId) ||
-				!interaction.guild
-			)
-				return;
+			if (!interaction.isModalSubmit() || !interaction.customId.endsWith(customId) || !interaction.guild) return;
 
 			const [targetId, messageId] = interaction.customId.split("_", 2);
 			const target = await interaction.guild.members.fetch(targetId);
@@ -23,9 +18,7 @@ export default [
 				if (timeout > 0) target.timeout(timeout, reason).catch(console.error);
 			}
 			target
-				.send(
-					`Your message in ${interaction.channel} was deleted for the following reason:\n\`\`\`${reason}\`\`\``,
-				)
+				.send(`Your message in ${interaction.channel} was deleted for the following reason:\n\`\`\`${reason}\`\`\``)
 				.then(() => {
 					interaction
 						.reply({
@@ -44,7 +37,7 @@ export default [
 				});
 		},
 	},
-] as Listener[];
+] as Listener[]);
 
 const units: Record<string, number> = {
 	s: 1_000,

@@ -7,9 +7,7 @@ import type { Command } from "djs-fsrouter";
 import { eq } from "drizzle-orm";
 import { LogMode } from "../../types/logging.ts";
 
-const LogModeValues = Object.keys(LogMode).filter(
-	(item) => !Number.isNaN(Number(item)),
-);
+const LogModeValues = Object.keys(LogMode).filter((item) => !Number.isNaN(Number(item)));
 
 const LogModeSelectOptions = Object.entries(LogMode)
 	.filter(([, value]) => typeof value === "number")
@@ -24,8 +22,7 @@ const manifest = createConfigurationManifest(Config, [
 		placeholder: "Select a logging mode",
 		options: LogModeSelectOptions,
 		validate(value) {
-			if (!LogModeValues.includes(value))
-				return "The provided logging mode is invalid";
+			if (!LogModeValues.includes(value)) return "The provided logging mode is invalid";
 
 			return true;
 		},
@@ -59,8 +56,7 @@ const ConfigCommand: Command = {
 		}
 
 		const configurationMessage = new ConfigurationMessage(Config, manifest, {
-			getWhereClause: ({ table, interaction }) =>
-				eq(table.id, interaction.guildId),
+			getWhereClause: ({ table, interaction }) => eq(table.id, interaction.guildId),
 		});
 
 		await configurationMessage.initialize(interaction);

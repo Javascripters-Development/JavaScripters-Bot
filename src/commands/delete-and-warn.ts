@@ -1,8 +1,4 @@
-import {
-	PermissionFlagsBits,
-	ApplicationCommandType,
-	TextInputStyle,
-} from "discord.js";
+import { PermissionFlagsBits, ApplicationCommandType, TextInputStyle } from "discord.js";
 const { ManageMessages, ModerateMembers } = PermissionFlagsBits;
 import { modalInput } from "../components.ts";
 import type { MessageCommand } from "djs-fsrouter";

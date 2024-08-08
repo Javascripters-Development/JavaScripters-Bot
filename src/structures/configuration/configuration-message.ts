@@ -29,18 +29,9 @@ import {
 	type MessageActionRowComponentBuilder,
 	type ModalActionRowComponentBuilder,
 } from "discord.js";
-import type {
-	ConfigurationOption,
-	ConfigurationOptionType,
-} from "./configuration-manifest.ts";
+import type { ConfigurationOption, ConfigurationOptionType } from "./configuration-manifest.ts";
 import db from "../../db.ts";
-import {
-	and,
-	Table as DrizzleTable,
-	eq,
-	SQL,
-	type InferSelectModel,
-} from "drizzle-orm";
+import { and, Table as DrizzleTable, eq, SQL, type InferSelectModel } from "drizzle-orm";
 import { Time } from "../../utils.ts";
 import { truncate } from "../../utils/common.ts";
 import { handleInteractionCollect } from "./interaction-handlers.ts";
@@ -90,9 +81,7 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 	}
 
 	/** Reply with the configuration message and listen to component interactions. */
-	public async initialize(
-		interaction: ChatInputCommandInteraction,
-	): Promise<void> {
+	public async initialize(interaction: ChatInputCommandInteraction): Promise<void> {
 		if (!interaction.inGuild() || this.#initialized) return;
 
 		const messageOptions = await this.getMessageOptions(interaction);
@@ -111,20 +100,13 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 	/** Add the component interaction listeners. */
 	private initializeListeners() {
-		const manifestOptionMap = Object.fromEntries(
-			this.#manifest.map((option) => [getCustomId(option), option]),
-		);
+		const manifestOptionMap = Object.fromEntries(this.#manifest.map((option) => [getCustomId(option), option]));
 
-		if (!this.#reply)
-			throw new Error(
-				"No internal reply message or interaction response available",
-			);
+		if (!this.#reply) throw new Error("No internal reply message or interaction response available");
 
 		const collector = this.#reply.createMessageComponentCollector({
 			filter: async (interaction) => {
-				const isValidCustomId = Object.keys(manifestOptionMap).includes(
-					interaction.customId,
-				);
+				const isValidCustomId = Object.keys(manifestOptionMap).includes(interaction.customId);
 				const message = await this.getReplyMessage();
 				const isReplyAuthor = message.author.id === interaction.user.id;
 
@@ -134,22 +116,15 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 		});
 
 		collector.on("collect", async (interaction) => {
-			if (!interaction.inGuild())
-				throw new Error("Interaction happened outside a guild");
+			if (!interaction.inGuild()) throw new Error("Interaction happened outside a guild");
 
-			this.handleInteractionCollect(
-				interaction,
-				manifestOptionMap[interaction.customId],
-			);
+			this.handleInteractionCollect(interaction, manifestOptionMap[interaction.customId]);
 		});
 	}
 
 	/** Get the {@link Message} for the configuration message reply. */
 	private async getReplyMessage() {
-		if (!this.#reply)
-			throw new Error(
-				"No internal reply message or interaction response available",
-			);
+		if (!this.#reply) throw new Error("No internal reply message or interaction response available");
 
 		return this.#reply instanceof Message ? this.#reply : this.#reply.fetch();
 	}
@@ -173,11 +148,7 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 			// TEMP: use .all() and select the first row manually, .get() does not work
 			.at(0) as { value: unknown };
 
-		const handleCollectResult = await handleInteractionCollect(
-			interaction,
-			manifestOption,
-			value,
-		);
+		const handleCollectResult = await handleInteractionCollect(interaction, manifestOption, value);
 
 		if (handleCollectResult === null) return;
 
@@ -185,9 +156,7 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 		db.update(this.#table)
 			.set({
-				[manifestOption.column as keyof object]: updatedValue
-					? updatedValue
-					: null,
+				[manifestOption.column as keyof object]: updatedValue ? updatedValue : null,
 			})
 			.where(whereClause)
 			.run();
@@ -222,28 +191,20 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 	/** Update the reply message. */
 	private async updateReply(messageOptions: BaseMessageOptions): Promise<void> {
-		if (!this.#reply)
-			throw new Error(
-				"No internal reply message or interaction response available",
-			);
+		if (!this.#reply) throw new Error("No internal reply message or interaction response available");
 
 		this.#reply = await this.#reply.edit(messageOptions);
 	}
 
 	/** Get the action rows with components. */
 	private getActionRows(): APIActionRowComponent<APIMessageActionRowComponent>[] {
-		const actionRows: ActionRowBuilder<MessageActionRowComponentBuilder>[] = [
-			new ActionRowBuilder(),
-		];
+		const actionRows: ActionRowBuilder<MessageActionRowComponentBuilder>[] = [new ActionRowBuilder()];
 
 		for (const manifestOption of this.#manifest) {
 			const component = this.getActionRowComponent(manifestOption);
 
 			if (["select", "channel", "role"].includes(manifestOption.type)) {
-				const row =
-					new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-						component,
-					);
+				const row = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(component);
 
 				actionRows.push(row);
 			} else {
@@ -256,9 +217,7 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 	}
 
 	/** Get the component for a manifest option. */
-	private getActionRowComponent(
-		manifestOption: ConfigurationOption<DrizzleTable>,
-	): MessageActionRowComponentBuilder {
+	private getActionRowComponent(manifestOption: ConfigurationOption<DrizzleTable>): MessageActionRowComponentBuilder {
 		const customId = getCustomId(manifestOption);
 
 		switch (manifestOption.type) {
@@ -282,24 +241,18 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 				return component;
 			}
 			case "channel": {
-				const component = new ChannelSelectMenuBuilder()
-					.setCustomId(customId)
-					.setMaxValues(1);
+				const component = new ChannelSelectMenuBuilder().setCustomId(customId).setMaxValues(1);
 
 				// TODO: set channel type
 
-				if (manifestOption.placeholder)
-					component.setPlaceholder(manifestOption.placeholder);
+				if (manifestOption.placeholder) component.setPlaceholder(manifestOption.placeholder);
 
 				return component;
 			}
 			case "role": {
-				const component = new RoleSelectMenuBuilder()
-					.setCustomId(customId)
-					.setMaxValues(1);
+				const component = new RoleSelectMenuBuilder().setCustomId(customId).setMaxValues(1);
 
-				if (manifestOption.placeholder)
-					component.setPlaceholder(manifestOption.placeholder);
+				if (manifestOption.placeholder) component.setPlaceholder(manifestOption.placeholder);
 
 				return component;
 			}
@@ -309,8 +262,7 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 					.addOptions(manifestOption.options)
 					.setMaxValues(1);
 
-				if (manifestOption.placeholder)
-					component.setPlaceholder(manifestOption.placeholder);
+				if (manifestOption.placeholder) component.setPlaceholder(manifestOption.placeholder);
 
 				return component;
 			}
@@ -319,9 +271,7 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 	/** Get the message options for the configuration message. */
 	private async getMessageOptions(
-		interaction:
-			| ChatInputCommandInteraction<"cached" | "raw">
-			| CollectedInteraction<"cached" | "raw">,
+		interaction: ChatInputCommandInteraction<"cached" | "raw"> | CollectedInteraction<"cached" | "raw">,
 	): Promise<BaseMessageOptions> {
 		let content = "";
 
@@ -338,32 +288,20 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 			// TEMP: use .all() and select the first row manually, .get() does not work
 			.at(0);
 
-		if (!databaseValues)
-			throw new Error("Could not retrieve the configuration");
+		if (!databaseValues) throw new Error("Could not retrieve the configuration");
 
 		for (const manifestOption of this.#manifest) {
-			const databaseValue = this.getOptionValue(
-				manifestOption,
-				databaseValues[manifestOption.column],
-			);
+			const databaseValue = this.getOptionValue(manifestOption, databaseValues[manifestOption.column]);
 
 			const nameFormatted = bold(manifestOption.name);
 			const descriptionFormatted = italic(manifestOption.description);
 
-			if (
-				manifestOption.type === "text" &&
-				manifestOption.style === TextInputStyle.Paragraph
-			) {
-				const valueFormatted = databaseValue
-					? codeBlock(truncate(databaseValue as string, 40))
-					: this.#notSetText;
+			if (manifestOption.type === "text" && manifestOption.style === TextInputStyle.Paragraph) {
+				const valueFormatted = databaseValue ? codeBlock(truncate(databaseValue as string, 40)) : this.#notSetText;
 
 				content += `${nameFormatted}\n-# ${descriptionFormatted}\n${valueFormatted}\n`;
 			} else {
-				const valueFormatted = this.formatValue(
-					manifestOption.type,
-					databaseValue,
-				);
+				const valueFormatted = this.formatValue(manifestOption.type, databaseValue);
 
 				content += `${nameFormatted} — ${valueFormatted}\n-# ${descriptionFormatted}\n\n`;
 			}

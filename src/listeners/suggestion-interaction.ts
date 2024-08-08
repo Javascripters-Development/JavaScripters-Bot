@@ -1,22 +1,7 @@
-import {
-	ActionRowBuilder,
-	TextInputBuilder,
-	ModalBuilder,
-	TextInputStyle,
-	inlineCode,
-} from "discord.js";
+import { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, inlineCode } from "discord.js";
 import type { Listener } from "../types/listener.ts";
-import {
-	Time,
-	capitalizeFirstLetter,
-	getConfig,
-	getKeyByValue,
-	hyperlink,
-} from "../utils.ts";
-import type {
-	SuggestionStatus,
-	UpdatedSuggestionStatus,
-} from "../schemas/suggestion.ts";
+import { Time, capitalizeFirstLetter, getConfig, getKeyByValue, hyperlink } from "../utils.ts";
+import type { SuggestionStatus, UpdatedSuggestionStatus } from "../schemas/suggestion.ts";
 import {
 	BUTTON_ID,
 	BUTTON_ID_STATUS_MAP,
@@ -48,10 +33,7 @@ export default [
 
 			const config = getConfig.get({ guildId: interaction.guildId });
 
-			if (
-				config?.suggestionManagerRole &&
-				!interaction.member.roles.cache.has(config.suggestionManagerRole)
-			) {
+			if (config?.suggestionManagerRole && !interaction.member.roles.cache.has(config.suggestionManagerRole)) {
 				return interaction.reply({
 					content: `You're missing the manager role and ${inlineCode(
 						"ManageGuild",
@@ -60,29 +42,20 @@ export default [
 				});
 			}
 
-			if (
-				!config?.suggestionManagerRole &&
-				!interaction.member.permissions.has("ManageGuild")
-			) {
+			if (!config?.suggestionManagerRole && !interaction.member.permissions.has("ManageGuild")) {
 				return interaction.reply({
 					content: `You're missing the ${inlineCode("ManageGuild")} permission`,
 					flags: "Ephemeral",
 				});
 			}
 
-			const suggestion = await Suggestion.createFromMessage(
-				interaction.message,
-			);
+			const suggestion = await Suggestion.createFromMessage(interaction.message);
 
-			const status = getKeyByValue(
-				BUTTON_ID,
-				interaction.customId as UpdatedSuggestionStatus,
-			) as SuggestionStatus | undefined;
+			const status = getKeyByValue(BUTTON_ID, interaction.customId as UpdatedSuggestionStatus) as
+				| SuggestionStatus
+				| undefined;
 
-			if (!status)
-				throw new Error(
-					`Could not map button ID "${interaction.customId}" to a valid suggestion status`,
-				);
+			if (!status) throw new Error(`Could not map button ID "${interaction.customId}" to a valid suggestion status`);
 
 			const textInput = new TextInputBuilder()
 				.setCustomId(MODAL_INPUT_ID)
@@ -91,14 +64,10 @@ export default [
 				.setPlaceholder("Leave empty if no reason necessary...")
 				.setMaxLength(Suggestion.MAX_REASON_LENGTH)
 				.setRequired(false);
-			const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
-				textInput,
-			);
+			const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(textInput);
 			const modal = new ModalBuilder()
 				.setCustomId(MODAL_ID)
-				.setTitle(
-					`${capitalizeFirstLetter(getStatusAsVerb(status))} suggestion`,
-				)
+				.setTitle(`${capitalizeFirstLetter(getStatusAsVerb(status))} suggestion`)
 				.addComponents(actionRow);
 
 			await interaction.showModal(modal);
@@ -106,18 +75,11 @@ export default [
 			const modalInteraction = await interaction.awaitModalSubmit({
 				time: Time.Minute * 10,
 			});
-			const inputReason =
-				modalInteraction.fields.getTextInputValue(MODAL_INPUT_ID);
+			const inputReason = modalInteraction.fields.getTextInputValue(MODAL_INPUT_ID);
 
-			await suggestion.setStatus(
-				modalInteraction.user,
-				status,
-				inputReason || undefined,
-				config,
-			);
+			await suggestion.setStatus(modalInteraction.user, status, inputReason || undefined, config);
 
-			const statusString =
-				BUTTON_ID_STATUS_MAP[interaction.customId as SuggestionButtonId];
+			const statusString = BUTTON_ID_STATUS_MAP[interaction.customId as SuggestionButtonId];
 
 			await modalInteraction.reply({
 				content: `You set the status of ${hyperlink(
@@ -143,9 +105,7 @@ export default [
 				return;
 
 			const config = getConfig.get({ guildId: interaction.guildId });
-			const suggestion = await Suggestion.createFromMessage(
-				interaction.message,
-			);
+			const suggestion = await Suggestion.createFromMessage(interaction.message);
 
 			if (interaction.customId === VOTE_BUTTON_ID.UPVOTE) {
 				await suggestion.upvote(interaction.user.id, config);
