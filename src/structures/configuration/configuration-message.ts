@@ -7,31 +7,25 @@ import {
 	ChannelSelectMenuBuilder,
 	ChatInputCommandInteraction,
 	codeBlock,
-	DiscordjsError,
-	DiscordjsErrorCodes,
 	EmbedBuilder,
 	inlineCode,
 	InteractionResponse,
 	italic,
 	Message,
 	MessageComponentInteraction,
-	ModalBuilder,
-	ModalSubmitInteraction,
 	roleMention,
 	RoleSelectMenuBuilder,
 	StringSelectMenuBuilder,
-	TextInputBuilder,
 	TextInputStyle,
 	type APIActionRowComponent,
 	type APIMessageActionRowComponent,
 	type BaseMessageOptions,
 	type CollectedInteraction,
 	type MessageActionRowComponentBuilder,
-	type ModalActionRowComponentBuilder,
 } from "discord.js";
 import type { ConfigurationOption, ConfigurationOptionType } from "./configuration-manifest.ts";
 import db from "../../db.ts";
-import { and, Table as DrizzleTable, eq, SQL, type InferSelectModel } from "drizzle-orm";
+import { and, Table as DrizzleTable, SQL, type InferSelectModel } from "drizzle-orm";
 import { Time } from "../../utils.ts";
 import { truncate } from "../../utils/common.ts";
 import { handleInteractionCollect } from "./interaction-handlers.ts";
