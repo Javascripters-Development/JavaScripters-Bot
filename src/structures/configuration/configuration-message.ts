@@ -235,30 +235,24 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 				return component;
 			}
 			case "channel": {
-				const component = new ChannelSelectMenuBuilder().setCustomId(customId).setMaxValues(1);
-
+				return new ChannelSelectMenuBuilder()
+					.setCustomId(customId)
+					.setPlaceholder(manifestOption.placeholder ?? "")
+					.setMaxValues(1);
 				// TODO: set channel type
-
-				if (manifestOption.placeholder) component.setPlaceholder(manifestOption.placeholder);
-
-				return component;
 			}
 			case "role": {
-				const component = new RoleSelectMenuBuilder().setCustomId(customId).setMaxValues(1);
-
-				if (manifestOption.placeholder) component.setPlaceholder(manifestOption.placeholder);
-
-				return component;
+				return new RoleSelectMenuBuilder()
+					.setCustomId(customId)
+					.setPlaceholder(manifestOption.placeholder ?? "")
+					.setMaxValues(1);
 			}
 			case "select": {
-				const component = new StringSelectMenuBuilder()
+				return new StringSelectMenuBuilder()
 					.setCustomId(customId)
+					.setPlaceholder(manifestOption.placeholder ?? "")
 					.addOptions(manifestOption.options)
 					.setMaxValues(1);
-
-				if (manifestOption.placeholder) component.setPlaceholder(manifestOption.placeholder);
-
-				return component;
 			}
 		}
 	}
