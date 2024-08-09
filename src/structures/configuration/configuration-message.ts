@@ -285,11 +285,13 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 			const descriptionFormatted = italic(manifestOption.description);
 
 			if (manifestOption.type === "text" && manifestOption.style === TextInputStyle.Paragraph) {
-				const valueFormatted = databaseValue ? codeBlock(truncate(databaseValue as string, 40)) : this.#notSetText;
+				const valueFormatted = databaseValue
+					? codeBlock(truncate(databaseValue as string, 40))
+					: `${this.#notSetText}\n`;
 
 				content += `${nameFormatted}\n-# ${descriptionFormatted}\n${valueFormatted}\n`;
 			} else {
-				const valueFormatted = this.formatValue(manifestOption.type, databaseValue);
+				const valueFormatted = this.formatValue(manifestOption, databaseValue);
 
 				content += `${nameFormatted} — ${valueFormatted}\n-# ${descriptionFormatted}\n\n`;
 			}
@@ -318,8 +320,8 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 	}
 
 	/** Format the value to display in an embed. */
-	private formatValue(type: ConfigurationOptionType, value: unknown): string {
-		switch (type) {
+	private formatValue(manifestOption: ConfigurationOption<DrizzleTable>, value: unknown): string {
+		switch (manifestOption.type) {
 			case "boolean": {
 				if (typeof value !== "boolean") return this.#notSetText;
 
