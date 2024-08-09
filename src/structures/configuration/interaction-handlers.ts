@@ -22,7 +22,6 @@ const handleTextInteractionCollect = async (
 	modalInputCustomId: string,
 	value: string | null,
 ) => {
-	let modalSubmitInteraction: ModalSubmitInteraction<"cached" | "raw">;
 	const modalCustomId = getCustomId(manifestOption, "modal");
 
 	// Use a modal to get the updated value
@@ -32,7 +31,8 @@ const handleTextInteractionCollect = async (
 		.setLabel(manifestOption.name)
 		.setValue(value ?? "")
 		.setPlaceholder(manifestOption.placeholder ?? "")
-		.setStyle(manifestOption.style ?? TextInputStyle.Short);
+		.setStyle(manifestOption.style ?? TextInputStyle.Short)
+		.setRequired(manifestOption.required ?? false);
 
 	const actionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(modalInput);
 	const modal = new ModalBuilder().setTitle(manifestOption.name).setCustomId(modalCustomId).addComponents(actionRow);

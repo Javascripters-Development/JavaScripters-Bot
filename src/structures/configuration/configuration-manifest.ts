@@ -24,6 +24,8 @@ interface PartialConfigurationOption<
 	description: string;
 	/** @default 'text' */
 	type?: Type;
+	/** @default false */
+	required?: boolean;
 	/** Validate the input, validation succeeds when `true` is returned. */
 	validate?: ConfigurationOptionValidateFn<ConfigurationOptionTypeMap[Type]>;
 	/** Transform the value when persisting to the database. */
