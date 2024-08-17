@@ -1,47 +1,38 @@
 import {
 	ActionRowBuilder,
-	bold,
-	ButtonBuilder,
-	ButtonStyle,
-	channelMention,
-	ChannelSelectMenuBuilder,
 	ChatInputCommandInteraction,
-	codeBlock,
-	EmbedBuilder,
-	inlineCode,
+	ComponentType,
+	DiscordjsErrorCodes,
+	DiscordjsTypeError,
 	InteractionResponse,
-	italic,
 	Message,
 	MessageComponentInteraction,
-	roleMention,
-	RoleSelectMenuBuilder,
 	StringSelectMenuBuilder,
-	TextInputStyle,
-	type APIActionRowComponent,
-	type APIMessageActionRowComponent,
 	type BaseMessageOptions,
 	type CollectedInteraction,
-	type MessageActionRowComponentBuilder,
+	type InteractionReplyOptions,
 } from "discord.js";
-import type { ConfigurationOption, ConfigurationOptionType } from "./configuration-manifest.ts";
+import type { ConfigurationOption } from "./configuration-manifest.ts";
 import db from "../../db.ts";
-import { and, Table as DrizzleTable, SQL, type InferSelectModel } from "drizzle-orm";
+import { and, Table as DrizzleTable, SQL } from "drizzle-orm";
 import { Time } from "../../utils.ts";
-import { truncate } from "../../utils/common.ts";
-import { handleInteractionCollect } from "./interaction-handlers.ts";
-import { getCustomId } from "./utils.ts";
+import { promptNewConfigurationOptionValue } from "./interaction-handlers.ts";
 
-interface GetMessageOptionsContext<T extends DrizzleTable> {
-	table: T;
+enum InteractionCustomId {
+	MainMenu = "config-main-menu",
+}
+
+interface GetMessageOptionsContext<Table extends DrizzleTable> {
+	table: Table;
 	interaction:
 		| ChatInputCommandInteraction<"cached" | "raw">
 		| CollectedInteraction<"cached" | "raw">
 		| MessageComponentInteraction<"cached" | "raw">;
 }
 
-interface ConfigurationMessageOptions<T extends DrizzleTable = DrizzleTable> {
+interface ConfigurationMessageOptions<Table extends DrizzleTable = DrizzleTable> {
 	/** Dynamically create the where clause for the database query. */
-	getWhereClause: (context: GetMessageOptionsContext<T>) => SQL<unknown>;
+	getWhereClause: (context: GetMessageOptionsContext<Table>) => SQL<unknown>;
 	/**
 	 * How long will this configuration message be interactable.
 	 *
@@ -51,9 +42,14 @@ interface ConfigurationMessageOptions<T extends DrizzleTable = DrizzleTable> {
 }
 
 /** Represents a configuration message. */
-export class ConfigurationMessage<Table extends DrizzleTable> {
-	#table: Table;
-	#manifest: ConfigurationOption<DrizzleTable>[];
+export class ConfigurationMessage<
+	Option extends ConfigurationOption<DrizzleTable>,
+	Table extends DrizzleTable = Option["table"],
+> {
+	/** How long the configuration message should stay alive. */
+	public readonly TIMEOUT = Time.Minute * 10;
+
+	#manifest: Option[];
 	#options: ConfigurationMessageOptions<Table>;
 
 	/** The {@link InteractionResponse} or {@link Message} for the current configuration message. */
@@ -61,15 +57,7 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 	#initialized = false;
 
-	/** The text for configuration options that aren't set */
-	#notSetText = italic("(Not set)");
-
-	constructor(
-		table: Table,
-		manifest: ConfigurationOption<DrizzleTable>[],
-		options: ConfigurationMessageOptions<Table>,
-	) {
-		this.#table = table;
+	constructor(manifest: Option[], options: ConfigurationMessageOptions<Table>) {
 		this.#manifest = manifest;
 		this.#options = options;
 	}
@@ -78,11 +66,11 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 	public async initialize(interaction: ChatInputCommandInteraction): Promise<void> {
 		if (!interaction.inGuild() || this.#initialized) return;
 
-		const messageOptions = await this.getMessageOptions(interaction);
+		const messageOptions = await this.getMainMenuMessageOptions();
 
 		await this.replyOrEdit(interaction, messageOptions);
 
-		await this.initializeListeners();
+		this.initializeListeners();
 	}
 
 	/** Stop listening to component interactions and clean up internal state. */
@@ -94,25 +82,30 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 	/** Add the component interaction listeners. */
 	private initializeListeners() {
-		const manifestOptionMap = Object.fromEntries(this.#manifest.map((option) => [getCustomId(option), option]));
-
 		if (!this.#reply) throw new Error("No internal reply message or interaction response available");
 
-		const collector = this.#reply.createMessageComponentCollector({
-			filter: async (interaction) => {
-				const isValidCustomId = Object.keys(manifestOptionMap).includes(interaction.customId);
-				const message = await this.getReplyMessage();
-				const isReplyAuthor = message.author.id === interaction.user.id;
+		const manifestOptionMap = Object.fromEntries(
+			this.#manifest.map((option) => [option.name, option as ConfigurationOption<Table>]),
+		);
 
-				return isValidCustomId || isReplyAuthor;
+		const collector = this.#reply.createMessageComponentCollector({
+			componentType: ComponentType.StringSelect,
+			filter: async (interaction) => {
+				const message = await this.getReplyMessage();
+				const isReplyAuthor = message.interaction?.user.id === interaction.user.id;
+				const isReplyMessage = interaction.message.id === message.id;
+
+				if (!Object.keys(manifestOptionMap).includes(interaction.values[0])) return false;
+
+				return isReplyAuthor && isReplyMessage;
 			},
-			time: Time.Minute * 10,
+			time: this.TIMEOUT,
 		});
 
 		collector.on("collect", async (interaction) => {
 			if (!interaction.inGuild()) throw new Error("Interaction happened outside a guild");
 
-			this.handleInteractionCollect(interaction, manifestOptionMap[interaction.customId]);
+			await this.handleInteractionCollect(interaction, manifestOptionMap[interaction.values[0]]);
 		});
 	}
 
@@ -120,44 +113,61 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 	private async getReplyMessage() {
 		if (!this.#reply) throw new Error("No internal reply message or interaction response available");
 
-		return this.#reply instanceof Message ? this.#reply : this.#reply.fetch();
+		return this.#reply instanceof Message ? this.#reply : await this.#reply.fetch();
 	}
 
 	private async handleInteractionCollect(
 		interaction: MessageComponentInteraction<"cached" | "raw">,
-		manifestOption: ConfigurationOption<DrizzleTable>,
+		manifestOption: ConfigurationOption<Table>,
 	) {
 		const whereClause = this.#options.getWhereClause({
-			table: this.#table,
+			table: manifestOption.table,
 			interaction,
 		});
 
-		const { value } = db
+		const { value: currentValue } = db
 			.select({
-				value: this.#table[manifestOption.column as keyof object],
+				value: manifestOption.table[manifestOption.column as keyof object],
 			})
-			.from(this.#table)
+			.from(manifestOption.table)
 			.where(and(whereClause))
 			.all()
 			// TEMP: use .all() and select the first row manually, .get() does not work
 			.at(0) as { value: unknown };
 
-		const handleCollectResult = await handleInteractionCollect(interaction, manifestOption, value);
+		let newValue: unknown;
 
-		if (handleCollectResult === null) return;
+		try {
+			newValue = await promptNewConfigurationOptionValue(interaction, manifestOption, currentValue);
+		} catch (error) {
+			if (error instanceof DiscordjsTypeError) {
+				if (
+					error.code === DiscordjsErrorCodes.InteractionCollectorError &&
+					error.message === "Collector received no interactions before ending with reason: time"
+				) {
+					// Exit early because an interaction collector timed out
+					return;
+				}
+			}
 
-		const [followUpInteraction, updatedValue] = handleCollectResult;
+			if (
+				!(error instanceof DiscordjsTypeError && error.code === DiscordjsErrorCodes.ModalSubmitInteractionFieldNotFound)
+			)
+				throw error;
 
-		db.update(this.#table)
-			.set({
-				[manifestOption.column as keyof object]: updatedValue ? updatedValue : null,
-			})
+			// User did not provide a value, meaning the database value should be set to NULL
+			newValue = null;
+		}
+
+		db.update(manifestOption.table)
+			.set({ [manifestOption.column as keyof object]: newValue ? newValue : null })
 			.where(whereClause)
 			.run();
 
-		const messageOptions = await this.getMessageOptions(followUpInteraction);
-
-		this.updateReply(messageOptions);
+		await interaction.followUp({
+			content: "Value updated successfully",
+			ephemeral: true,
+		});
 	}
 
 	/** Reply to a message or edit the reply if the interaction got replied to or is deferred and keep reply in memory. */
@@ -165,6 +175,8 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 		interaction: ChatInputCommandInteraction,
 		messageOptions: BaseMessageOptions,
 	): Promise<void> {
+		if (!interaction.isRepliable) return;
+
 		let replyPromise: Promise<Message | InteractionResponse>;
 
 		if (interaction.replied || interaction.deferred) {
@@ -178,161 +190,35 @@ export class ConfigurationMessage<Table extends DrizzleTable> {
 
 			this.#reply = messageOrInteractionResponse;
 		} catch (error) {
-			await interaction.followUp("Something went wrong... Try again later");
+			const action = interaction.replied ? "followUp" : "reply";
+
+			await interaction[action]({
+				content: "Something went wrong... Try again later",
+				ephemeral: true,
+			});
+
 			this.destroy();
 		}
 	}
 
-	/** Update the reply message. */
-	private async updateReply(messageOptions: BaseMessageOptions): Promise<void> {
-		if (!this.#reply) throw new Error("No internal reply message or interaction response available");
+	/** Get the main menu message options. */
+	private getMainMenuMessageOptions(): InteractionReplyOptions {
+		const selectMenu = new StringSelectMenuBuilder()
+			.setCustomId(InteractionCustomId.MainMenu)
+			.setPlaceholder("Select a configuration option")
+			.setMaxValues(1);
 
-		this.#reply = await this.#reply.edit(messageOptions);
-	}
-
-	/** Get the action rows with components. */
-	private getActionRows(): APIActionRowComponent<APIMessageActionRowComponent>[] {
-		const actionRows: ActionRowBuilder<MessageActionRowComponentBuilder>[] = [new ActionRowBuilder()];
-
-		for (const manifestOption of this.#manifest) {
-			const component = this.getActionRowComponent(manifestOption);
-
-			if (["select", "channel", "role"].includes(manifestOption.type)) {
-				const row = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(component);
-
-				actionRows.push(row);
-			} else {
-				// Ensure that buttons are always in the first action row
-				actionRows[0].addComponents(component);
-			}
+		for (const [index, { name }] of this.#manifest.entries()) {
+			selectMenu.addOptions({
+				label: `${index + 1}. ${name}`,
+				value: name,
+			});
 		}
-
-		return actionRows.map((row) => row.toJSON());
-	}
-
-	/** Get the component for a manifest option. */
-	private getActionRowComponent(manifestOption: ConfigurationOption<DrizzleTable>): MessageActionRowComponentBuilder {
-		const customId = getCustomId(manifestOption);
-
-		switch (manifestOption.type) {
-			case "text": {
-				const component = new ButtonBuilder()
-					.setCustomId(customId)
-					.setLabel(manifestOption.label ?? manifestOption.name)
-					.setStyle(ButtonStyle.Primary);
-
-				if (manifestOption.emoji) component.setEmoji(manifestOption.emoji);
-
-				return component;
-			}
-			case "boolean": {
-				const component = new ButtonBuilder()
-					.setCustomId(customId)
-					.setLabel(manifestOption.label ?? manifestOption.name);
-
-				if (manifestOption.emoji) component.setEmoji(manifestOption.emoji);
-
-				return component;
-			}
-			case "channel": {
-				return new ChannelSelectMenuBuilder()
-					.setCustomId(customId)
-					.setPlaceholder(manifestOption.placeholder ?? "")
-					.setMaxValues(1);
-				// TODO: set channel type
-			}
-			case "role": {
-				return new RoleSelectMenuBuilder()
-					.setCustomId(customId)
-					.setPlaceholder(manifestOption.placeholder ?? "")
-					.setMaxValues(1);
-			}
-			case "select": {
-				return new StringSelectMenuBuilder()
-					.setCustomId(customId)
-					.setPlaceholder(manifestOption.placeholder ?? "")
-					.addOptions(manifestOption.options)
-					.setMaxValues(1);
-			}
-		}
-	}
-
-	/** Get the message options for the configuration message. */
-	private async getMessageOptions(
-		interaction: ChatInputCommandInteraction<"cached" | "raw"> | CollectedInteraction<"cached" | "raw">,
-	): Promise<BaseMessageOptions> {
-		let content = "";
-
-		const whereClause = this.#options.getWhereClause({
-			table: this.#table,
-			interaction,
-		});
-
-		const databaseValues = db
-			.select()
-			.from(this.#table)
-			.where(whereClause)
-			.all()
-			// TEMP: use .all() and select the first row manually, .get() does not work
-			.at(0);
-
-		if (!databaseValues) throw new Error("Could not retrieve the configuration");
-
-		for (const manifestOption of this.#manifest) {
-			const databaseValue = this.getOptionValue(manifestOption, databaseValues[manifestOption.column]);
-
-			const nameFormatted = bold(manifestOption.name);
-			const descriptionFormatted = italic(manifestOption.description);
-
-			if (manifestOption.type === "text" && manifestOption.style === TextInputStyle.Paragraph) {
-				const valueFormatted = databaseValue
-					? codeBlock(truncate(databaseValue as string, 40))
-					: `${this.#notSetText}\n`;
-
-				content += `${nameFormatted}\n-# ${descriptionFormatted}\n${valueFormatted}\n`;
-			} else {
-				const valueFormatted = this.formatValue(manifestOption, databaseValue);
-
-				content += `${nameFormatted} — ${valueFormatted}\n-# ${descriptionFormatted}\n\n`;
-			}
-		}
-
-		const embed = new EmbedBuilder()
-			.setColor("Blue")
-			// Should be able to configure through the constructor
-			.setTitle("Configuration")
-			.setDescription(content.trim());
 
 		return {
-			embeds: [embed],
-			components: this.getActionRows(),
+			content: "Select which configuration option you want to view/edit:",
+			components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu)],
+			ephemeral: true,
 		};
-	}
-
-	/** Get the raw or transformed (return value of {@link ConfigurationOption.fromDatabase|fromDatabase}) database value. */
-	private getOptionValue<T extends ConfigurationOption<DrizzleTable>>(
-		manifestOption: T,
-		value: InferSelectModel<DrizzleTable>[T["column"]],
-	): unknown {
-		if (manifestOption.fromDatabase) return manifestOption.fromDatabase(value);
-
-		return value;
-	}
-
-	/** Format the value to display in an embed. */
-	private formatValue(manifestOption: ConfigurationOption<DrizzleTable>, value: unknown): string {
-		switch (manifestOption.type) {
-			case "boolean": {
-				if (typeof value !== "boolean") return this.#notSetText;
-
-				return value ? "Yes" : "No";
-			}
-			case "channel":
-				return value ? channelMention(value as string) : this.#notSetText;
-			case "role":
-				return value ? roleMention(value as string) : this.#notSetText;
-			default:
-				return value ? inlineCode(value as string) : this.#notSetText;
-		}
 	}
 }

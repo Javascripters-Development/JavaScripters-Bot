@@ -1,7 +1,7 @@
 import {
 	ActionRowBuilder,
-	DiscordjsError,
 	DiscordjsErrorCodes,
+	DiscordjsTypeError,
 	ModalBuilder,
 	ModalSubmitInteraction,
 	TextInputBuilder,
@@ -15,8 +15,8 @@ import type { Table as DrizzleTable } from "drizzle-orm";
 import { Time } from "../../utils.ts";
 import { getCustomId } from "./utils.ts";
 
-/** Handle the interaction for a text option. */
-const handleTextInteractionCollect = async (
+/** Get the user input through a modal. */
+const getModalInput = async (
 	interaction: MessageComponentInteraction,
 	manifestOption: ConfigurationOption<DrizzleTable> & { type: "text" },
 	modalInputCustomId: string,
@@ -39,50 +39,38 @@ const handleTextInteractionCollect = async (
 
 	await interaction.showModal(modal);
 
-	try {
-		return (await interaction.awaitModalSubmit({
-			time: Time.Minute * 2,
-		})) as ModalSubmitInteraction<"cached" | "raw">;
-	} catch (error) {
-		// Ignore no interactions due to timeout error
-		if (
-			error instanceof DiscordjsError &&
-			error.code === DiscordjsErrorCodes.InteractionCollectorError &&
-			error.message === "Collector received no interactions before ending with reason: time"
-		)
-			return null;
+	const modalSubmitInteraction = (await interaction.awaitModalSubmit({
+		filter: (interaction) => interaction.customId === modalCustomId,
+		time: Time.Minute * 2,
+	})) as ModalSubmitInteraction<"cached" | "raw">;
 
-		throw error;
-	}
+	return [modalSubmitInteraction, modalSubmitInteraction.fields.getTextInputValue(modalInputCustomId)] as const;
 };
 
-/** Handle any kind of message component interaction. */
-export const handleInteractionCollect = async (
+/** Get the new value for a configuration option. */
+export const promptNewConfigurationOptionValue = async (
 	interaction: MessageComponentInteraction,
 	manifestOption: ConfigurationOption<DrizzleTable>,
 	value: unknown,
-): Promise<[CollectedInteraction<"cached" | "raw">, unknown] | null> => {
+): Promise<unknown | null> => {
 	let updatedValue: unknown;
 	let followUpInteraction!: CollectedInteraction<"cached" | "raw">;
 
 	if (manifestOption.type === "text") {
 		const modalInputCustomId = getCustomId(manifestOption, "modal-input");
-		const modalSubmitInteraction = await handleTextInteractionCollect(
+		const [modalSubmitInteraction, newValue] = await getModalInput(
 			interaction,
 			manifestOption,
 			modalInputCustomId,
 			value as string | null,
 		);
 
-		// Return early because the component timed out
-		if (modalSubmitInteraction === null) return null;
-
-		updatedValue = modalSubmitInteraction?.fields.getTextInputValue(modalInputCustomId);
 		followUpInteraction = modalSubmitInteraction;
+		updatedValue = newValue;
 	}
 
 	// Silently acknowledge user input interaction
 	await followUpInteraction.deferUpdate();
 
-	return [followUpInteraction, updatedValue];
+	return updatedValue;
 };
