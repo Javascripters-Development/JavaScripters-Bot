@@ -16,7 +16,7 @@ import { Time } from "../../utils.ts";
 import { getCustomId } from "./utils.ts";
 
 /** Get the user input through a modal. */
-const getModalInput = async (
+const promptModalValue = async (
 	interaction: MessageComponentInteraction,
 	manifestOption: ConfigurationOption<DrizzleTable> & { type: "text" },
 	modalInputCustomId: string,
@@ -58,7 +58,7 @@ export const promptNewConfigurationOptionValue = async (
 
 	if (manifestOption.type === "text") {
 		const modalInputCustomId = getCustomId(manifestOption, "modal-input");
-		const [modalSubmitInteraction, newValue] = await getModalInput(
+		const [modalSubmitInteraction, newValue] = await promptModalValue(
 			interaction,
 			manifestOption,
 			modalInputCustomId,
