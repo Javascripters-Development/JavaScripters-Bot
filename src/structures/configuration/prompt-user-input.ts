@@ -1,7 +1,5 @@
 import {
 	ActionRowBuilder,
-	DiscordjsErrorCodes,
-	DiscordjsTypeError,
 	ModalBuilder,
 	ModalSubmitInteraction,
 	TextInputBuilder,
