@@ -16,7 +16,7 @@ import type { ConfigurationOption } from "./configuration-manifest.ts";
 import db from "../../db.ts";
 import { and, Table as DrizzleTable, SQL } from "drizzle-orm";
 import { Time } from "../../utils.ts";
-import { promptNewConfigurationOptionValue } from "./interaction-handlers.ts";
+import { promptNewConfigurationOptionValue } from "./prompt-user-input.ts";
 
 enum InteractionCustomId {
 	MainMenu = "config-main-menu",
