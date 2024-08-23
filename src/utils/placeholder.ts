@@ -4,6 +4,11 @@ const END_DELIMITER = "]";
 /** Check if a character is part of the latin alphabet. */
 const isLatinLetter = (character: string) => character.toUpperCase() !== character.toLowerCase();
 
+/** Replace a certain character range inside a string with another string. */
+const replaceInString = (input: string, replaceWith: string, startOffset: number, endOffset: number) => {
+	return input.substring(0, startOffset) + replaceWith + input.substring(endOffset);
+};
+
 interface PlaceholderReplaceHookContext {
 	/** The offset of the placeholder start delimiter. */
 	startOffset: number;
@@ -83,11 +88,6 @@ const placeholderIterateExecute = (text: string, hook: PlaceholderReplaceHook) =
 	}
 
 	return finalText;
-};
-
-/** Replace a certain character range inside a string with another string. */
-const replaceInString = (input: string, replaceWith: string, startOffset: number, endOffset: number) => {
-	return input.substring(0, startOffset) + replaceWith + input.substring(endOffset);
 };
 
 /** Replace placeholders in a string. */

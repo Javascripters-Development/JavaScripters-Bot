@@ -30,7 +30,8 @@ describe("Utils - Placeholder", () => {
 		it.each([
 			["Hello, [[name]]!", []],
 			["Hello, [yourName]! I'm [[myName]].", [["yourName", 7, 16]]],
-		])('Should ignore escaped placeholders for the string "%s"', (text, expected) => {
+			["Hello, [your:name]! I'm [[myName]].", []],
+		])('Should ignore invalid placeholders for the string "%s"', (text, expected) => {
 			const actual = findPlaceholders(text);
 
 			expect(actual).toEqual(expected);
@@ -62,7 +63,9 @@ describe("Utils - Placeholder", () => {
 		it.each([
 			["Hello, [[name]]!", { name: "you" }, "Hello, [[name]]!"],
 			["Hello, [yourName]! I'm [[myName]].", { yourName: "you", myName: "me" }, "Hello, you! I'm [[myName]]."],
-		])('Should ignore escaped placeholders for the string "%s"', (text, placeholderMap, expected) => {
+			// biome-ignore format: more readable when inline
+			["Hello, [your:name]! I'm [[myName]].", { 'your:name': "you", myName: "me" }, "Hello, [your:name]! I'm [[myName]]."],
+		])('Should ignore invalid placeholders for the string "%s"', (text, placeholderMap, expected) => {
 			const actual = replacePlaceholders(text, placeholderMap);
 
 			expect(actual).toBe(expected);
