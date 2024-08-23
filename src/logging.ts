@@ -6,10 +6,7 @@ import type { TextChannel, Guild, Role } from "discord.js";
 import { eq, and, sql } from "drizzle-orm";
 const { placeholder } = sql;
 
-export function setLogging(
-	{ id }: Guild,
-	config: LogMode.NONE | { mode: LogMode; channel: TextChannel },
-) {
+export function setLogging({ id }: Guild, config: LogMode.NONE | { mode: LogMode; channel: TextChannel }) {
 	let loggingMode = LogMode.NONE;
 	let loggingChannel = null;
 	if (config) {
@@ -66,11 +63,6 @@ const whitelistRole_add = db
 
 const whitelistRole_remove = db
 	.delete(LoggingWhitelist)
-	.where(
-		and(
-			eq(LoggingWhitelist.guildId, placeholder("guildId")),
-			eq(LoggingWhitelist.roleId, placeholder("id")),
-		),
-	)
+	.where(and(eq(LoggingWhitelist.guildId, placeholder("guildId")), eq(LoggingWhitelist.roleId, placeholder("id"))))
 	.returning()
 	.prepare();

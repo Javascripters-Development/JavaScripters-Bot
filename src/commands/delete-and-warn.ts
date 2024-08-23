@@ -1,8 +1,4 @@
-import {
-	PermissionFlagsBits,
-	ApplicationCommandType,
-	TextInputStyle,
-} from "discord.js";
+import { PermissionFlagsBits, ApplicationCommandType, TextInputStyle } from "discord.js";
 const { ManageMessages, ModerateMembers } = PermissionFlagsBits;
 import { modalInput } from "../components.ts";
 import type { MessageCommand } from "djs-fsrouter";
@@ -29,8 +25,7 @@ const DeleteAndWarn: MessageCommand = {
 		if (!targetMessage.deletable) {
 			return interaction.reply({
 				ephemeral: true,
-				content:
-					"I do not have the permission to delete messages in this channel.",
+				content: "I do not have the permission to delete messages in this channel.",
 			});
 		}
 		const { id, author } = targetMessage;

@@ -42,9 +42,7 @@ const Purge: Command = {
 		} = channel;
 		const myself = members.me || (await members.fetchMe());
 		if (!channel.permissionsFor(myself).has(ManageMessages)) {
-			return reply(
-				"Error: I do not have the permission to delete messages in this channel.",
-			);
+			return reply("Error: I do not have the permission to delete messages in this channel.");
 		}
 
 		let messages = Array.from(

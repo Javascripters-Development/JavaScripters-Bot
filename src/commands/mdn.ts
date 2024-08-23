@@ -32,10 +32,7 @@ const Mdn: Command = {
 		const searchResult = await search(searchTerm).catch(console.error);
 		if (!searchResult?.ok) {
 			interaction.respond([]).catch(console.error);
-			if (searchResult)
-				console.error(
-					`Got ${searchResult.status} ${searchResult.statusText} code trying to use CSE`,
-				);
+			if (searchResult) console.error(`Got ${searchResult.status} ${searchResult.statusText} code trying to use CSE`);
 		} else {
 			const { items } = (await searchResult.json()) as {
 				items: SearchResult[];
@@ -58,12 +55,8 @@ const Mdn: Command = {
 		}
 
 		const crawler = await scrape(url);
-		const intro = crawler(
-			".main-page-content > .section-content:first-of-type > *",
-		);
-		const links = crawler(
-			".main-page-content > .section-content:first-of-type a",
-		);
+		const intro = crawler(".main-page-content > .section-content:first-of-type > *");
+		const links = crawler(".main-page-content > .section-content:first-of-type a");
 		Array.prototype.forEach.call(links, makeLinkAbsolute);
 		let title: string = crawler("head title").text();
 		if (title.endsWith(" | MDN")) title = title.slice(0, -6);
@@ -93,9 +86,7 @@ const BASE_URL = `https://www.googleapis.com/customsearch/v1/siterestrict?key=${
 
 function search(term: string, num = 10) {
 	if (!Number.isInteger(num) || num < 1 || num > 10)
-		throw new RangeError(
-			`The number of results must be an integer between 1 and 10, inclusive (got ${num}).`,
-		);
+		throw new RangeError(`The number of results must be an integer between 1 and 10, inclusive (got ${num}).`);
 
 	return fetch(`${BASE_URL}&q=${encodeURIComponent(term)}&num=${num}`);
 }

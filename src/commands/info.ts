@@ -1,9 +1,4 @@
-import {
-	type ChatInputCommandInteraction,
-	type APIEmbed,
-	ApplicationCommandType,
-	channelMention,
-} from "discord.js";
+import { type ChatInputCommandInteraction, type APIEmbed, ApplicationCommandType, channelMention } from "discord.js";
 import type { Command } from "djs-fsrouter";
 
 export const type = ApplicationCommandType.ChatInput;
@@ -35,15 +30,11 @@ JavaScripters is a well known JavaScript focused server with over 10k members`,
 				},
 				{
 					name: "Rules channel",
-					value: interaction.guild?.rulesChannelId
-						? channelMention(interaction.guild?.rulesChannelId)
-						: "None",
+					value: interaction.guild?.rulesChannelId ? channelMention(interaction.guild?.rulesChannelId) : "None",
 				},
 				{
 					name: "Created",
-					value: `<t:${Math.floor(
-						(interaction.guild?.createdTimestamp as number) / 1000,
-					)}:d>`,
+					value: `<t:${Math.floor((interaction.guild?.createdTimestamp as number) / 1000)}:d>`,
 				},
 			],
 		};

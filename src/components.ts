@@ -15,13 +15,8 @@ import type {
 	APIButtonComponentWithCustomId,
 } from "discord.js";
 
-interface ButtonComponent
-	extends Omit<Omit<APIButtonComponentWithCustomId, "type">, "style"> {
-	style?:
-		| ButtonStyle.Primary
-		| ButtonStyle.Secondary
-		| ButtonStyle.Success
-		| ButtonStyle.Danger;
+interface ButtonComponent extends Omit<Omit<APIButtonComponentWithCustomId, "type">, "style"> {
+	style?: ButtonStyle.Primary | ButtonStyle.Secondary | ButtonStyle.Success | ButtonStyle.Danger;
 }
 
 export function stringSelectMenu(
@@ -32,15 +27,11 @@ export function stringSelectMenu(
 ): APIActionRowComponent<APIStringSelectComponent> {
 	return {
 		type: ActionRow,
-		components: [
-			{ type: StringSelect, custom_id, options, min_values, max_values },
-		],
+		components: [{ type: StringSelect, custom_id, options, min_values, max_values }],
 	};
 }
 
-export function buttonRow(
-	...buttons: ButtonComponent[]
-): APIActionRowComponent<APIButtonComponent> {
+export function buttonRow(...buttons: ButtonComponent[]): APIActionRowComponent<APIButtonComponent> {
 	return {
 		type: ActionRow,
 		components: buttons.map((button) => ({
@@ -51,9 +42,7 @@ export function buttonRow(
 	};
 }
 
-export function modalInput(
-	input: Omit<TextInputComponentData, "type">,
-): ActionRowData<ModalActionRowComponentData> {
+export function modalInput(input: Omit<TextInputComponentData, "type">): ActionRowData<ModalActionRowComponentData> {
 	return {
 		type: ActionRow,
 		components: [

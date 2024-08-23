@@ -30,10 +30,8 @@ getConfig.get = (placeholderValues?: Record<string, unknown> | undefined) => {
  * Formats the content and the URL into a masked URL without embed.
  * @see {@link djsHyperlink}.
  */
-export const hyperlink = <C extends string, U extends string>(
-	content: C,
-	url: U,
-) => djsHyperlink(content, hideLinkEmbed(url));
+export const hyperlink = <C extends string, U extends string>(content: C, url: U) =>
+	djsHyperlink(content, hideLinkEmbed(url));
 
 /**
  * Capitalizes the first letter of a string.
@@ -41,9 +39,8 @@ export const hyperlink = <C extends string, U extends string>(
  * @example
  * capitalizeFirstLetter('hello world') // "Hello world"
  */
-export const capitalizeFirstLetter = <T extends string>(
-	value: T,
-): Capitalize<T> => (value[0].toUpperCase() + value.slice(1)) as Capitalize<T>;
+export const capitalizeFirstLetter = <T extends string>(value: T): Capitalize<T> =>
+	(value[0].toUpperCase() + value.slice(1)) as Capitalize<T>;
 
 /**
  * Utility for human readable time values.
@@ -68,7 +65,5 @@ export enum Time {
  * @example
  * getKeyByValue({ a: 1, b: 2, c: 3 }, 2) // "b"
  */
-export const getKeyByValue = <const T>(
-	object: Record<PropertyKey, T>,
-	value: T,
-) => Object.keys(object).find((key) => object[key] === value);
+export const getKeyByValue = <const T>(object: Record<PropertyKey, T>, value: T) =>
+	Object.keys(object).find((key) => object[key] === value);
