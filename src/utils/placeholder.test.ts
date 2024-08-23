@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { findPlaceholders } from "./placeholder.ts";
+import { findPlaceholders, replacePlaceholders } from "./placeholder.ts";
 
 describe("Utils - Placeholder", () => {
 	describe(`${findPlaceholders.name}()`, () => {
@@ -34,6 +34,38 @@ describe("Utils - Placeholder", () => {
 			const actual = findPlaceholders(text);
 
 			expect(actual).toEqual(expected);
+		});
+	});
+
+	describe(`${replacePlaceholders.name}()`, () => {
+		it.each([
+			["Hello, [name]!", { name: "you" }, "Hello, you!"],
+			["Hello, [yourName]! I'm [myName]", { yourName: "you", myName: "me" }, "Hello, you! I'm me"],
+		])('Should replace the placeholders for the string "%s"', (text, placeholderMap, expected) => {
+			const actual = replacePlaceholders(text, placeholderMap);
+
+			expect(actual).toBe(expected);
+		});
+
+		it("Should not replace any placeholders when none are present", () => {
+			const actual = replacePlaceholders("Hello you!", { name: "you" });
+
+			expect(actual).toBe("Hello you!");
+		});
+
+		it("Should only find the deepest nested placeholder", () => {
+			const actual = replacePlaceholders("Hello [te[name]xt]!", { name: "you" });
+
+			expect(actual).toBe("Hello [teyouxt]!");
+		});
+
+		it.each([
+			["Hello, [[name]]!", { name: "you" }, "Hello, [[name]]!"],
+			["Hello, [yourName]! I'm [[myName]].", { yourName: "you", myName: "me" }, "Hello, you! I'm [[myName]]."],
+		])('Should ignore escaped placeholders for the string "%s"', (text, placeholderMap, expected) => {
+			const actual = replacePlaceholders(text, placeholderMap);
+
+			expect(actual).toBe(expected);
 		});
 	});
 });

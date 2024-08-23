@@ -4,28 +4,25 @@ const END_DELIMITER = "]";
 /** Check if a character is part of the latin alphabet. */
 const isLatinLetter = (character: string) => character.toUpperCase() !== character.toLowerCase();
 
-/**
- * Find all placeholders in a string.
- *
- * @example
- * findPlaceholders('Hello [name]!') // [["name", 6, 11]]
- *
- * @example <caption>With escaped delimiters</caption>
- * findPlaceholders('Hello [[name]]!') // []
- */
-export const findPlaceholders = (text: string) => {
-	/**
-	 * The placeholders mapped as the following nested array structure:\
-	 * `0`: placeholder name\
-	 * `1`: offset of the placeholder start delimiter\
-	 * `2`: offset of the placeholder end delimiter
-	 */
-	const placeholderMap: [string, number, number][] = [];
+interface PlaceholderReplaceHookContext {
+	/** The offset of the placeholder start delimiter. */
+	startOffset: number;
+	/** The offset of the placeholder end delimiter. */
+	endOffset: number;
+	/** The placeholder name. */
+	name: string;
+}
 
+/** The hook that replaces the placeholder or does nothing with it. */
+type PlaceholderReplaceHook = (context: PlaceholderReplaceHookContext) => string | null;
+
+/** Iterate over all placeholder values and replace with the result of the hook (or ignore if `null`). */
+const placeholderIterateExecute = (text: string, hook: PlaceholderReplaceHook) => {
 	let placeholderStarted = false;
 	let isEscaped = false;
 	let delimiterStartOffset = -1;
 	let buffer = "";
+	let finalText = text;
 
 	const resetState = () => {
 		placeholderStarted = false;
@@ -34,10 +31,10 @@ export const findPlaceholders = (text: string) => {
 		buffer = "";
 	};
 
-	for (let i = 0; i < text.length; i++) {
-		const nextCharacter = text[i + 1];
-		const currentCharacter = text[i];
-		const previousCharacter = text[i - 1];
+	for (let i = 0; i < finalText.length; i++) {
+		const nextCharacter = finalText[i + 1];
+		const currentCharacter = finalText[i];
+		const previousCharacter = finalText[i - 1];
 
 		// Reset state when nested delimiters exist
 		if (placeholderStarted && currentCharacter === START_DELIMITER) resetState();
@@ -59,7 +56,16 @@ export const findPlaceholders = (text: string) => {
 				continue;
 			}
 
-			placeholderMap.push([buffer, delimiterStartOffset, i]);
+			const placeholderValue = hook({ startOffset: delimiterStartOffset, endOffset: i, name: buffer });
+
+			// Replace the placeholder
+			if (placeholderValue !== null) {
+				finalText = replaceInString(finalText, placeholderValue, delimiterStartOffset, i + 1);
+
+				// Replacing a placeholder causes the character positions to shift, so we need to fix these
+				i = delimiterStartOffset + placeholderValue.length;
+			}
+
 			resetState();
 			continue;
 		}
@@ -75,6 +81,49 @@ export const findPlaceholders = (text: string) => {
 			buffer += currentCharacter;
 		}
 	}
+
+	return finalText;
+};
+
+/** Replace a certain character range inside a string with another string. */
+const replaceInString = (input: string, replaceWith: string, startOffset: number, endOffset: number) => {
+	return input.substring(0, startOffset) + replaceWith + input.substring(endOffset);
+};
+
+/** Replace placeholders in a string. */
+export const replacePlaceholders = (text: string, placeholderMapping: Record<string, string>) => {
+	const finalText = placeholderIterateExecute(text, ({ name }) => {
+		if (!(name in placeholderMapping)) return null;
+
+		return placeholderMapping[name];
+	});
+
+	return finalText;
+};
+
+/**
+ * Find all placeholders in a string.
+ *
+ * @example
+ * findPlaceholders('Hello [name]!') // [["name", 6, 11]]
+ *
+ * @example <caption>With escaped delimiters</caption>
+ * findPlaceholders('Hello [[name]]!') // []
+ */
+export const findPlaceholders = (text: string) => {
+	/**
+	 * The placeholders mapped as the following nested array structure:\
+	 * `0`: placeholder name\
+	 * `1`: offset of the placeholder start delimiter\
+	 * `2`: offset of the placeholder end delimiter
+	 */
+	const placeholderMap: [string, number, number][] = [];
+
+	placeholderIterateExecute(text, ({ name, startOffset, endOffset }) => {
+		placeholderMap.push([name, startOffset, endOffset]);
+
+		return null;
+	});
 
 	return placeholderMap;
 };
