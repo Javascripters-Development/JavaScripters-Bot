@@ -12,8 +12,6 @@ import {
 const env = object({
 	TOKEN: string(),
 	GUILD: string(),
-	CSE_KEY: string(),
-	CSE_CSX: string(),
 	SCRAPE_CACHE: optional(
 		coerce(number([minValue(0, "Must not be negative")]), Number),
 	),
@@ -30,8 +28,6 @@ declare module "bun" {
 	interface Env {
 		TOKEN: string;
 		GUILD: string;
-		CSE_KEY: string;
-		CSE_CSX: string;
 		SCRAPE_CACHE?: number;
 		ORM_DEBUG?: boolean;
 	}

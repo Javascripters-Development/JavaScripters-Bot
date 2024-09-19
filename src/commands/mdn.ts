@@ -4,12 +4,23 @@ import type { Command } from "djs-fsrouter";
 import scrape, { elementToMarkdown } from "../scraper.ts";
 import type { Element } from "cheerio";
 
-const MDN_URL = "https://developer.mozilla.org/en-US/";
-type SearchResult = {
+import { truncate } from "../utils/common.ts";
+
+import Fuse from "fuse.js";
+
+const MDN_ROOT = "https://developer.mozilla.org";
+const MDN_INDEX = `${MDN_ROOT}/en-US/search-index.json`;
+const DOCS_ROOT = "/en-US/docs/";
+const RESULT_INDICATOR = "d#:";
+type IndexEntry = {
 	title: string;
-	link: string;
-	snippet: string;
+	url: string;
 };
+
+const fuse = new Fuse<IndexEntry>([], {
+	keys: ["title"],
+	ignoreLocation: true,
+});
 
 const Mdn: Command = {
 	description: "Search the Modzilla Developer Network",
@@ -29,33 +40,17 @@ const Mdn: Command = {
 			interaction.respond([]).catch(console.error);
 			return;
 		}
-		const searchResult = await search(searchTerm).catch(console.error);
-		if (!searchResult?.ok) {
-			interaction.respond([]).catch(console.error);
-			if (searchResult)
-				console.error(
-					`Got ${searchResult.status} ${searchResult.statusText} code trying to use CSE`,
-				);
-		} else {
-			const { items } = (await searchResult.json()) as {
-				items: SearchResult[];
-			};
-			interaction.respond(items.map(itemToChoice)).catch(console.error);
-		}
+		const choices = search(searchTerm)
+			.map(itemToChoice)
+			.filter(({ value }) => value.length <= 100);
+		interaction.respond(choices).catch(console.error);
 	},
 
 	async run(interaction) {
 		const query = interaction.options.getString("query", true);
-		let url: string;
-		if (query.startsWith("docs/")) url = MDN_URL + query;
-		else {
-			const defer = interaction.deferReply();
-			const {
-				items: [quickSearch],
-			} = (await (await search(query, 1)).json()) as { items: SearchResult[] };
-			url = quickSearch.link;
-			await defer;
-		}
+		const url = query.startsWith(RESULT_INDICATOR)
+			? `${MDN_ROOT}${query.replace(RESULT_INDICATOR, DOCS_ROOT)}`
+			: `${MDN_ROOT}${search(query, 1)[0]?.url}`;
 
 		const crawler = await scrape(url);
 		const intro = crawler(
@@ -89,26 +84,38 @@ const Mdn: Command = {
 };
 export default Mdn;
 
-const BASE_URL = `https://www.googleapis.com/customsearch/v1/siterestrict?key=${process.env.CSE_KEY}&cx=${process.env.CSE_CSX}`;
+async function refreshIndex() {
+	const res = await fetch(MDN_INDEX);
+	if (res.ok) {
+		const index = (await res.json()) as IndexEntry[];
+		fuse.setCollection(index);
+	}
+}
+refreshIndex();
+setInterval(refreshIndex, 3 * 3600_000); // hours
 
-function search(term: string, num = 10) {
-	if (!Number.isInteger(num) || num < 1 || num > 10)
+function search(term: string, limit = 10) {
+	if (!Number.isInteger(limit) || limit < 1 || limit > 10)
 		throw new RangeError(
-			`The number of results must be an integer between 1 and 10, inclusive (got ${num}).`,
+			`The number of results must be an integer between 1 and 10, inclusive (got ${limit}).`,
 		);
 
-	return fetch(`${BASE_URL}&q=${encodeURIComponent(term)}&num=${num}`);
+	return fuse.search(term, { limit }).map(({ item }) => item);
 }
 
-function itemToChoice({ title, link }: SearchResult) {
-	if (title.endsWith(" | MDN")) title = title.slice(0, -6);
-	return { name: title, value: link.substring(MDN_URL.length) };
+function itemToChoice({ title, url }: IndexEntry) {
+	const category = url.match(/^\/en-US\/docs\/([^\/]+)\//)?.[1] || "Web";
+	if (category !== "Web") title += ` - ${category}`;
+	return {
+		name: truncate(title, 100),
+		value: url.replace(DOCS_ROOT, RESULT_INDICATOR),
+	};
 }
 
 function makeLinkAbsolute(a: Element) {
 	const { href }: { href?: string } = a.attribs;
 	if (href?.startsWith("/")) {
-		a.attribs.href = `https://developer.mozilla.org${href}`;
+		a.attribs.href = MDN_ROOT + href;
 	}
 }
 

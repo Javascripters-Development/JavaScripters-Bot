@@ -26,8 +26,6 @@ It also need a CSE API key and a CSX if you want `/mdn` to work. It can optional
 ```ini
 TOKEN=[BOT TOKEN]
 GUILD=[GUILD ID]
-CSE_KEY=[API key for Google Custom Search Engine]
-CSE_CSX=[Custom Search Engine id]
 SCRAPE_CACHE=[number of hours scraped pages should be cached]
 ```
 
