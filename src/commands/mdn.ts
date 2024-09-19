@@ -11,7 +11,7 @@ type SearchResult = {
 	snippet: string;
 };
 
-const Info: Command = {
+const Mdn: Command = {
 	description: "Search the Modzilla Developer Network",
 	options: [
 		{
@@ -37,22 +37,14 @@ const Info: Command = {
 					`Got ${searchResult.status} ${searchResult.statusText} code trying to use CSE`,
 				);
 		} else {
-			const { items }: { items: SearchResult[] } = await searchResult.json();
+			const { items } = (await searchResult.json()) as {
+				items: SearchResult[];
+			};
 			interaction.respond(items.map(itemToChoice)).catch(console.error);
 		}
 	},
 
 	async run(interaction) {
-		if (!CAN_QUERY) {
-			interaction
-				.reply({
-					ephemeral: true,
-					content: "Sorry! This command is unavailable for the moment.",
-				})
-				.catch(console.error);
-			return;
-		}
-
 		const query = interaction.options.getString("query", true);
 		let url: string;
 		if (query.startsWith("docs/")) url = MDN_URL + query;
@@ -60,7 +52,7 @@ const Info: Command = {
 			const defer = interaction.deferReply();
 			const {
 				items: [quickSearch],
-			} = await search(query, 1).then((r) => r.json());
+			} = (await (await search(query, 1)).json()) as { items: SearchResult[] };
 			url = quickSearch.link;
 			await defer;
 		}
@@ -95,18 +87,11 @@ const Info: Command = {
 		}).catch(console.error);
 	},
 };
-export default Info;
+export default Mdn;
 
-const BASE_URL =
-	process.env.CSE_KEY && process.env.CSE_CSX
-		? `https://www.googleapis.com/customsearch/v1/siterestrict?key=${process.env.CSE_KEY}&cx=${process.env.CSE_CSX}`
-		: "";
-
-const CAN_QUERY = !!BASE_URL;
+const BASE_URL = `https://www.googleapis.com/customsearch/v1/siterestrict?key=${process.env.CSE_KEY}&cx=${process.env.CSE_CSX}`;
 
 function search(term: string, num = 10) {
-	if (!CAN_QUERY)
-		throw new Error("Cannot query Google CSE, key or CSX missing.");
 	if (!Number.isInteger(num) || num < 1 || num > 10)
 		throw new RangeError(
 			`The number of results must be an integer between 1 and 10, inclusive (got ${num}).`,

@@ -1,37 +1,38 @@
 {
-  "name": "javascripters-bot",
-  "version": "0.0.1",
-  "module": "src/index.ts",
-  "type": "module",
-  "devDependencies": {
-    "better-sqlite3": "^8.5.2",
-    "bun-types": "^0.8.0",
-    "drizzle-kit": "^0.19.13",
-    "rome": "^12.1.3"
-  },
-  "author": "Jacob Jackson",
-  "license": "GPL-3.0-or-later",
-  "dependencies": {
-    "bufferutil": "^4.0.7",
-    "cheerio": "^1.0.0-rc.12",
-    "discord.js": "^14.13.0",
-    "djs-fsrouter": "^0.0.4",
-    "drizzle-orm": "^0.28.5",
-    "entities-decode": "^2.0.0",
-    "erlpack": "^0.1.4",
-    "utf-8-validate": "^6.0.3",
-    "zlib-sync": "^0.1.8"
-  },
-  "scripts": {
-    "dev": "bun --watch ./src/index.ts",
-    "prod": "NODE_ENV=production bun src/index.ts",
-    "format": "rome format",
-    "lint": "rome check ./src",
-    "migrate": "bun run migrate:generate && bun run migrate:execute",
-    "migrate:generate": "drizzle-kit generate:sqlite",
-    "migrate:execute": "bun scripts/migrate.ts",
-    "migrate:clean": "drizzle-kit drop",
-    "studio": "drizzle-kit studio"
-  },
-  "trustedDependencies": ["better-sqlite3"]
+	"name": "javascripters-bot",
+	"version": "0.0.1",
+	"module": "src/index.ts",
+	"type": "module",
+	"devDependencies": {
+		"@biomejs/biome": "^1.4.1",
+		"better-sqlite3": "^9.2.2",
+		"bun-types": "^1.0.20",
+		"drizzle-kit": "^0.20.9"
+	},
+	"author": "Jacob Jackson",
+	"license": "GPL-3.0-or-later",
+	"dependencies": {
+		"bufferutil": "^4.0.8",
+		"cheerio": "^1.0.0-rc.12",
+		"discord.js": "^14.14.1",
+		"djs-fsrouter": "^0.0.12",
+		"drizzle-orm": "^0.29.2",
+		"entities-decode": "^2.0.0",
+		"erlpack": "^0.1.4",
+		"utf-8-validate": "^6.0.3",
+		"valibot": "^0.25.0",
+		"zlib-sync": "^0.1.9"
+	},
+	"scripts": {
+		"dev": "bun --watch ./src/index.ts",
+		"prod": "NODE_ENV=production bun src/index.ts",
+		"format": "biome format --write ./src",
+		"lint": "biome check ./src",
+		"migrate": "bun run migrate:generate && bun run migrate:execute",
+		"migrate:generate": "drizzle-kit generate:sqlite",
+		"migrate:execute": "bun scripts/migrate.ts",
+		"migrate:clean": "drizzle-kit drop",
+		"studio": "drizzle-kit studio"
+	},
+	"trustedDependencies": ["better-sqlite3"]
 }
