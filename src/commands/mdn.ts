@@ -6,7 +6,7 @@ import type { Element } from "cheerio";
 
 import { truncate } from "../utils/common.ts";
 
-import Fuse from "fuse.js";
+import { Index } from "flexsearch";
 
 const MDN_ROOT = "https://developer.mozilla.org";
 const MDN_INDEX = `${MDN_ROOT}/en-US/search-index.json`;
@@ -17,10 +17,8 @@ type IndexEntry = {
 	url: string;
 };
 
-const fuse = new Fuse<IndexEntry>([], {
-	keys: ["title"],
-	ignoreLocation: true,
-});
+let index: IndexEntry[];
+const searcher = new Index({ tokenize: "forward" });
 
 const Mdn: Command = {
 	description: "Search the Modzilla Developer Network",
@@ -87,8 +85,8 @@ export default Mdn;
 async function refreshIndex() {
 	const res = await fetch(MDN_INDEX);
 	if (res.ok) {
-		const index = (await res.json()) as IndexEntry[];
-		fuse.setCollection(index);
+		index = await res.json();
+		index.forEach(({ title }, id) => searcher.add(id, title));
 	}
 }
 refreshIndex();
@@ -100,7 +98,7 @@ function search(term: string, limit = 10) {
 			`The number of results must be an integer between 1 and 10, inclusive (got ${limit}).`,
 		);
 
-	return fuse.search(term, { limit }).map(({ item }) => item);
+	return searcher.search(term, limit).map((id) => index[id as number]);
 }
 
 function itemToChoice({ title, url }: IndexEntry) {
