@@ -12,6 +12,9 @@ import {
 const env = object({
 	TOKEN: string(),
 	GUILD: string(),
+	MDN_INDEX_REFRESH: optional(
+		coerce(number([minValue(1, "Must be at least 1")]), Number),
+	),
 	SCRAPE_CACHE: optional(
 		coerce(number([minValue(0, "Must not be negative")]), Number),
 	),
@@ -30,6 +33,7 @@ declare module "bun" {
 		GUILD: string;
 		SCRAPE_CACHE?: number;
 		ORM_DEBUG?: boolean;
+		MDN_INDEX_REFRESH?: number;
 	}
 }
 export default env;

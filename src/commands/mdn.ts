@@ -90,7 +90,8 @@ async function refreshIndex() {
 	}
 }
 refreshIndex();
-setInterval(refreshIndex, 3 * 3600_000); // hours
+const REFRESH_INTERVAL = Number(process.env.MDN_INDEX_REFRESH) || 12; // hours
+setInterval(refreshIndex, 3600_000 * REFRESH_INTERVAL);
 
 function search(term: string, limit = 10) {
 	if (!Number.isInteger(limit) || limit < 1 || limit > 10)

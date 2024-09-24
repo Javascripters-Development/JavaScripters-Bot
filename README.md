@@ -27,6 +27,7 @@ It also need a CSE API key and a CSX if you want `/mdn` to work. It can optional
 TOKEN=[BOT TOKEN]
 GUILD=[GUILD ID]
 SCRAPE_CACHE=[number of hours scraped pages should be cached]
+MDN_INDEX_REFRESH=[how often the MDN index should be refreshed, in hours]
 ```
 
 ## Contributing
