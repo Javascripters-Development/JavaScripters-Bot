@@ -7,12 +7,14 @@ export type CheerioNode = {
 	attribs: { [attr: string]: string };
 };
 
-const CACHE_DURATION = (process.env.SCRAPE_CACHE || 1) * 3600_000;
-const cache = new Map<string, { fetchDate: number; crawler: CheerioAPI }>();
+const CACHE_DURATION = (process.env.SCRAPE_CACHE_LIFETIME || 3) * 3600_000;
+const cache = CACHE_DURATION
+	? new Map<string, { fetchDate: number; crawler: CheerioAPI }>()
+	: null;
 
 export default async function scrape(url: string, skipCache = false) {
 	const now = Date.now();
-	if (CACHE_DURATION && !skipCache) {
+	if (cache && !skipCache) {
 		const cached = cache.get(url);
 		if (cached && cached.fetchDate + CACHE_DURATION < now) {
 			return cached.crawler;
@@ -20,7 +22,7 @@ export default async function scrape(url: string, skipCache = false) {
 	}
 	const html = await fetch(url).then((r) => r.text());
 	const crawler = load(html);
-	if (CACHE_DURATION) cache.set(url, { fetchDate: now, crawler });
+	cache?.set(url, { fetchDate: now, crawler });
 	return crawler;
 }
 
