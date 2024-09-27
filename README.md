@@ -21,7 +21,7 @@ bun install
 
 Finally, create a .env file with the `TOKEN` and `GUILD` variables. `TOKEN` should be set to the token of your Discord bot account and `GUILD` should be set to the id of the guild you want the bot to function in (this bot is configured by default to only run in a single server).
 
-It also need a CSE API key and a CSX if you want `/mdn` to work. It can optionally have a `SCRAPE_CACHE_LIFETIME` which is the duration in hours of the scrape cache. Defaults to 1 hour.
+`/mdn` can optionally have a `SCRAPE_CACHE_LIFETIME` which is the duration in hours of the scrape cache. Defaults to 1 hour.
 
 ```ini
 TOKEN=[BOT TOKEN]
