@@ -7,6 +7,7 @@ import type { Element } from "cheerio";
 import { truncate } from "../utils/common.ts";
 
 import { Index } from "flexsearch";
+// @ts-ignore
 import indexOptions from "flexsearch/dist/module/lang/latin/advanced.js";
 
 const MDN_ROOT = "https://developer.mozilla.org";
