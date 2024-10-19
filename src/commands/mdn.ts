@@ -7,6 +7,7 @@ import type { Element } from "cheerio";
 import { truncate } from "../utils/common.ts";
 
 import { Index } from "flexsearch";
+import indexOptions from "flexsearch/dist/module/lang/latin/advanced.js";
 
 const MDN_ROOT = "https://developer.mozilla.org";
 const MDN_INDEX = `${MDN_ROOT}/en-US/search-index.json`;
@@ -18,7 +19,7 @@ type IndexEntry = {
 };
 
 let index: IndexEntry[];
-const searcher = new Index({ tokenize: "forward" });
+const searcher = new Index(indexOptions);
 
 const Mdn: Command = {
 	description: "Search the Modzilla Developer Network",
