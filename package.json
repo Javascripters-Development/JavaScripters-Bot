@@ -19,6 +19,7 @@
 		"drizzle-orm": "^0.29.2",
 		"entities-decode": "^2.0.0",
 		"erlpack": "^0.1.4",
+		"flexsearch": "^0.7.43",
 		"utf-8-validate": "^6.0.3",
 		"valibot": "^0.25.0",
 		"zlib-sync": "^0.1.9"
