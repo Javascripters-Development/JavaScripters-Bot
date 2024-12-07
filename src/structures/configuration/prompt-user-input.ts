@@ -16,12 +16,12 @@ import {
 	ChannelSelectMenuBuilder,
 	ChannelSelectMenuInteraction,
 	ChannelType,
+	subtext,
 } from "discord.js";
 import type { ConfigurationOption } from "./configuration-manifest.ts";
 import { sql, type Table as DrizzleTable } from "drizzle-orm";
 import { Time } from "../../utils.ts";
 import { getCustomId } from "./utils.ts";
-import { smallText } from "../../utils/index.ts";
 
 /** The context to provide for the update value hook. */
 export interface UpdateValueHookContext {
@@ -100,7 +100,7 @@ const promptChannelValue = async (
 	const selectMenuCustomId = getCustomId(manifestOption);
 	const formattedDescription = manifestOption.description
 		.split("\n")
-		.map((text) => smallText(text))
+		.map((text) => subtext(text))
 		.join("\n");
 	const selectMenu = new ChannelSelectMenuBuilder()
 		.setCustomId(selectMenuCustomId)
@@ -145,7 +145,7 @@ const promptBooleanValue = async (
 	const buttonCustomId = getCustomId(manifestOption);
 	const formattedDescription = manifestOption.description
 		.split("\n")
-		.map((text) => smallText(text))
+		.map((text) => subtext(text))
 		.join("\n");
 	const button = new ButtonBuilder()
 		.setCustomId(buttonCustomId)
