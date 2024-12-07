@@ -16,7 +16,7 @@ import type { ConfigurationOption } from "./configuration-manifest.ts";
 import db from "../../db.ts";
 import { and, Table as DrizzleTable, SQL } from "drizzle-orm";
 import { Time } from "../../utils.ts";
-import { promptNewConfigurationOptionValue } from "./prompt-user-input.ts";
+import { promptNewConfigurationOptionValue, type UpdateValueHookContext } from "./prompt-user-input.ts";
 
 enum InteractionCustomId {
 	MainMenu = "config-main-menu",
@@ -137,8 +137,27 @@ export class ConfigurationMessage<
 
 		let newValue: unknown;
 
+		const hook = async ({ interaction, type, value }: UpdateValueHookContext) => {
+			db.update(manifestOption.table)
+				.set({ [manifestOption.column as keyof object]: newValue ? newValue : null })
+				.where(whereClause)
+				.run();
+
+			const messageContent = "Value updated successfully";
+
+			if (type === "channel") {
+				await interaction.deferReply();
+				return;
+			}
+
+			await interaction.reply({
+				content: messageContent,
+				ephemeral: true,
+			});
+		};
+
 		try {
-			newValue = await promptNewConfigurationOptionValue(interaction, manifestOption, currentValue);
+			await promptNewConfigurationOptionValue(interaction, manifestOption, currentValue, hook);
 		} catch (error) {
 			if (error instanceof DiscordjsTypeError) {
 				if (
@@ -158,16 +177,6 @@ export class ConfigurationMessage<
 			// User did not provide a value, meaning the database value should be set to NULL
 			newValue = null;
 		}
-
-		db.update(manifestOption.table)
-			.set({ [manifestOption.column as keyof object]: newValue ? newValue : null })
-			.where(whereClause)
-			.run();
-
-		await interaction.followUp({
-			content: "Value updated successfully",
-			ephemeral: true,
-		});
 	}
 
 	/** Reply to a message or edit the reply if the interaction got replied to or is deferred and keep reply in memory. */

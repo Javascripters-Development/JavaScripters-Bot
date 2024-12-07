@@ -1,5 +1,5 @@
 import type { InferSelectModel, Table as DrizzleTable } from "drizzle-orm";
-import type { Channel, Role, TextInputStyle } from "discord.js";
+import type { Channel, ChannelType, Role, TextInputStyle } from "discord.js";
 
 interface ConfigurationOptionTypeMap {
 	text: string;
@@ -79,6 +79,8 @@ export interface ConfigurationChannelOption<Table extends DrizzleTable, Column e
 	extends PartialConfigurationOption<"channel", Table, Column> {
 	type: "channel";
 	placeholder?: string;
+	/** @default [ChannelType.GuildText] */
+	channelTypes?: ChannelType[];
 }
 
 export interface ConfigurationSelectOption<Table extends DrizzleTable, Column extends keyof InferSelectModel<Table>>
