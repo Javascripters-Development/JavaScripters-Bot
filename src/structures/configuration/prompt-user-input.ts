@@ -17,11 +17,14 @@ import {
 	ChannelSelectMenuInteraction,
 	ChannelType,
 	subtext,
+	RoleSelectMenuBuilder,
+	RoleSelectMenuInteraction,
 } from "discord.js";
 import type { ConfigurationOption } from "./configuration-manifest.ts";
 import { sql, type Table as DrizzleTable } from "drizzle-orm";
 import { Time } from "../../utils.ts";
 import { getCustomId } from "./utils.ts";
+import { stripIndents } from "common-tags";
 
 /** The context to provide for the update value hook. */
 export interface UpdateValueHookContext {
@@ -43,13 +46,23 @@ export const promptNewConfigurationOptionValue = async (
 	value: unknown,
 	updateValueHook: UpdateValueHook,
 ) => {
-	if (manifestOption.type === "text") {
-		const modalInputCustomId = getCustomId(manifestOption, "modal-input");
-		await promptTextValue(interaction, manifestOption, modalInputCustomId, value as string | null, updateValueHook);
-	} else if (manifestOption.type === "channel") {
-		await promptChannelValue(interaction, manifestOption, value as string | null, updateValueHook);
-	} else if (manifestOption.type === "boolean") {
-		await promptBooleanValue(interaction, manifestOption, value as boolean | null, updateValueHook);
+	switch (manifestOption.type) {
+		case "text": {
+			const modalInputCustomId = getCustomId(manifestOption, "modal-input");
+			await promptTextValue(interaction, manifestOption, modalInputCustomId, value as string | null, updateValueHook);
+			break;
+		}
+		case "channel":
+			await promptChannelValue(interaction, manifestOption, value as string | null, updateValueHook);
+			break;
+		case "boolean":
+			await promptBooleanValue(interaction, manifestOption, value as boolean | null, updateValueHook);
+			break;
+		case "role":
+			await promptRoleValue(interaction, manifestOption, value as string | null, updateValueHook);
+			break;
+		case "select":
+			throw new Error("Not yet implemented");
 	}
 };
 
@@ -155,7 +168,7 @@ const promptBooleanValue = async (
 	if (manifestOption.emoji) button.setEmoji(manifestOption.emoji);
 
 	const messageOptions: InteractionReplyOptions = {
-		content: `
+		content: stripIndents`
 			${bold(manifestOption.name)}
 			${formattedDescription}
 		`,
@@ -177,5 +190,52 @@ const promptBooleanValue = async (
 
 	collector.on("collect", async (interaction: ButtonInteraction<"cached" | "raw">) => {
 		await updateValueHook({ interaction, value: sql`NOT ${manifestOption.column}`, type: manifestOption.type });
+	});
+};
+
+/** Get the user input for a role option. */
+const promptRoleValue = async (
+	interaction: MessageComponentInteraction,
+	manifestOption: ConfigurationOption<DrizzleTable> & { type: "role" },
+	value: string | null,
+	updateValueHook: UpdateValueHook,
+) => {
+	const selectMenuCustomId = getCustomId(manifestOption);
+	const formattedDescription = manifestOption.description
+		.split("\n")
+		.map((text) => subtext(text))
+		.join("\n");
+	const selectMenu = new RoleSelectMenuBuilder()
+		.setCustomId(selectMenuCustomId)
+		.setPlaceholder(manifestOption.placeholder ?? "Select a channel")
+		.setMinValues(0)
+		.setMaxValues(1);
+
+	if (value) selectMenu.setDefaultRoles(value);
+
+	const messageOptions = {
+		content: stripIndents`
+			${bold(manifestOption.name)}
+			${formattedDescription}
+		`,
+		components: [new ActionRowBuilder<RoleSelectMenuBuilder>().addComponents(selectMenu)],
+		ephemeral: true,
+		fetchReply: true,
+	} as const satisfies InteractionReplyOptions;
+
+	const followUpInteraction = await interaction.reply(messageOptions);
+
+	const collector = followUpInteraction.createMessageComponentCollector({
+		componentType: ComponentType.RoleSelect,
+		filter: (interaction) => {
+			if (!interaction.inGuild()) return false;
+
+			return interaction.customId === selectMenuCustomId;
+		},
+		time: Time.Minute * 2,
+	});
+
+	collector.on("collect", async (interaction: RoleSelectMenuInteraction<"cached" | "raw">) => {
+		await updateValueHook({ interaction, value: interaction.values.at(0), type: manifestOption.type });
 	});
 };
