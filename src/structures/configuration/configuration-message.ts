@@ -108,6 +108,12 @@ export class ConfigurationMessage<
 
 			await this.handleInteractionCollect(interaction, manifestOptionMap[interaction.values[0]]);
 		});
+
+		collector.on("end", (_, reason) => {
+			if (reason === "time") return;
+
+			console.error(`Collector stopped for reason: ${reason}`);
+		});
 	}
 
 	/** Get the {@link Message} for the configuration message reply. */
