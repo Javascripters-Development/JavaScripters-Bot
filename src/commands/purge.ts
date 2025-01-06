@@ -28,7 +28,7 @@ const Purge: Command = {
 		const { channel } = interaction;
 
 		function reply(content: string) {
-			return interaction.reply({ ephemeral: true, content });
+			return interaction.reply({ flags: "Ephemeral", content });
 		}
 
 		if (!channel) {
