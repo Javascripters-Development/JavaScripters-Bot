@@ -1,5 +1,6 @@
 import {
 	ActionRowBuilder,
+	channelMention,
 	ChatInputCommandInteraction,
 	ComponentType,
 	DiscordjsErrorCodes,
@@ -92,7 +93,7 @@ export class ConfigurationMessage<
 			componentType: ComponentType.StringSelect,
 			filter: async (interaction) => {
 				const message = await this.getReplyMessage();
-				const isReplyAuthor = message.interaction?.user.id === interaction.user.id;
+				const isReplyAuthor = message.interactionMetadata?.user.id === interaction.user.id;
 				const isReplyMessage = interaction.message.id === message.id;
 
 				if (!Object.keys(manifestOptionMap).includes(interaction.values[0])) return false;
@@ -116,6 +117,15 @@ export class ConfigurationMessage<
 		return this.#reply instanceof Message ? this.#reply : await this.#reply.fetch();
 	}
 
+	private getPostHookMessageContent(type: string, value: unknown) {
+		switch (type) {
+			case "channel":
+				return value ? `Channel set to ${channelMention(value as string)}` : "Channel value removed";
+			default:
+				return "Value updated successfully";
+		}
+	}
+
 	private async handleInteractionCollect(
 		interaction: MessageComponentInteraction<"cached" | "raw">,
 		manifestOption: ConfigurationOption<Table>,
@@ -135,23 +145,14 @@ export class ConfigurationMessage<
 			// TEMP: use .all() and select the first row manually, .get() does not work
 			.at(0) as { value: unknown };
 
-		let newValue: unknown;
-
 		const hook = async ({ interaction, type, value }: UpdateValueHookContext) => {
 			db.update(manifestOption.table)
-				.set({ [manifestOption.column as keyof object]: newValue ? newValue : null })
+				.set({ [manifestOption.column as keyof object]: value ? value : null })
 				.where(whereClause)
 				.run();
 
-			const messageContent = "Value updated successfully";
-
-			if (type === "channel") {
-				await interaction.deferReply();
-				return;
-			}
-
 			await interaction.reply({
-				content: messageContent,
+				content: this.getPostHookMessageContent(type, value),
 				ephemeral: true,
 			});
 		};
@@ -173,9 +174,6 @@ export class ConfigurationMessage<
 				!(error instanceof DiscordjsTypeError && error.code === DiscordjsErrorCodes.ModalSubmitInteractionFieldNotFound)
 			)
 				throw error;
-
-			// User did not provide a value, meaning the database value should be set to NULL
-			newValue = null;
 		}
 	}
 
@@ -225,7 +223,7 @@ export class ConfigurationMessage<
 		}
 
 		return {
-			content: "Select which configuration option you want to view/edit:",
+			content: "What option would you like to edit?",
 			components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu)],
 			ephemeral: true,
 		};
