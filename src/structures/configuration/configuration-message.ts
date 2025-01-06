@@ -122,7 +122,7 @@ export class ConfigurationMessage<
 			case "channel":
 				return value ? `Channel set to ${channelMention(value as string)}` : "Channel value removed";
 			default:
-				return "Value updated successfully";
+				return value ? "Value updated successfully" : "Successfully reset value";
 		}
 	}
 
