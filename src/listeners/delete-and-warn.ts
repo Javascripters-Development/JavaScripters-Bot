@@ -15,9 +15,8 @@ export default [
 			const [targetId, messageId] = interaction.customId.split("_", 2);
 			const target = await interaction.guild.members.fetch(targetId);
 			const reason = interaction.fields.getField("deletionReason").value;
-			const targetMessage = await interaction.channel?.messages.fetch(
-				messageId,
-			);
+			const targetMessage =
+				await interaction.channel?.messages.fetch(messageId);
 			targetMessage?.delete().catch(console.error);
 			if (target.moderatable) {
 				const timeout = parseTime(interaction.fields.getField("timeout").value);
@@ -30,7 +29,7 @@ export default [
 				.then(() => {
 					interaction
 						.reply({
-							ephemeral: true,
+							flags: "Ephemeral",
 							content: "Reason sent.",
 						})
 						.catch(console.error);
@@ -38,7 +37,7 @@ export default [
 				.catch(() => {
 					interaction
 						.reply({
-							ephemeral: true,
+							flags: "Ephemeral",
 							content: `The reason could not be sent to ${target}; they proabably blocked me or disabled DMs from server members.\n\`\`\`${reason}\`\`\``,
 						})
 						.catch(console.error);

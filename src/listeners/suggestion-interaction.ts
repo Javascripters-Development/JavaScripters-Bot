@@ -31,7 +31,7 @@ import { Suggestion } from "../structures/suggestion.ts";
 const MODAL_ID = "suggestion-modal";
 const MODAL_INPUT_ID = "suggestion-reason";
 
-export default ([
+export default [
 	// Handle status update interaction
 	{
 		event: "interactionCreate",
@@ -56,7 +56,7 @@ export default ([
 					content: `You're missing the manager role and ${inlineCode(
 						"ManageGuild",
 					)} permission`,
-					ephemeral: true,
+					flags: "Ephemeral",
 				});
 			}
 
@@ -66,7 +66,7 @@ export default ([
 			) {
 				return interaction.reply({
 					content: `You're missing the ${inlineCode("ManageGuild")} permission`,
-					ephemeral: true,
+					flags: "Ephemeral",
 				});
 			}
 
@@ -124,7 +124,7 @@ export default ([
 					"this suggestion",
 					interaction.message.url,
 				)} to ${inlineCode(statusString.toLowerCase())}`,
-				ephemeral: true,
+				flags: "Ephemeral",
 			});
 		},
 	},
@@ -154,7 +154,7 @@ export default ([
 						"this",
 						interaction.message.url,
 					)} suggestion`,
-					ephemeral: true,
+					flags: "Ephemeral",
 				});
 			} else {
 				await suggestion.downvote(interaction.user.id, config);
@@ -163,9 +163,9 @@ export default ([
 						"this",
 						interaction.message.url,
 					)} suggestion`,
-					ephemeral: true,
+					flags: "Ephemeral",
 				});
 			}
 		},
 	},
-] as Listener[]);
+] as Listener[];
