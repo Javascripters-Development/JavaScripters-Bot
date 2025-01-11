@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { findPlaceholders, replacePlaceholders } from "./placeholder.ts";
 
 describe("Utils - Placeholder", () => {
@@ -9,11 +9,14 @@ describe("Utils - Placeholder", () => {
 			["Hello, [yourName]! I'm [myName].", [["yourName", 7, 16], ["myName", 23, 30]]],
 			// biome-ignore format: more readable when inline
 			["Hello, [[yourName]! I'm [myName]].",[["yourName", 8, 17],["myName", 24, 31]]],
-		])('Should find the placeholders for the string "%s"', (text, expected) => {
-			const actual = findPlaceholders(text);
+		] as [string, [string, number, number][]][])(
+			'Should find the placeholders for the string "%s"',
+			(text, expected) => {
+				const actual = findPlaceholders(text);
 
-			expect(actual).toEqual(expected);
-		});
+				expect(actual).toEqual(expected);
+			},
+		);
 
 		it("Should not find any placeholders when none are present", () => {
 			const actual = findPlaceholders("Hello you!");
@@ -31,11 +34,14 @@ describe("Utils - Placeholder", () => {
 			["Hello, [[name]]!", []],
 			["Hello, [yourName]! I'm [[myName]].", [["yourName", 7, 16]]],
 			["Hello, [your:name]! I'm [[myName]].", []],
-		])('Should ignore invalid placeholders for the string "%s"', (text, expected) => {
-			const actual = findPlaceholders(text);
+		] as [string, [string, number, number][]][])(
+			'Should ignore invalid placeholders for the string "%s"',
+			(text, expected) => {
+				const actual = findPlaceholders(text);
 
-			expect(actual).toEqual(expected);
-		});
+				expect(actual).toEqual(expected);
+			},
+		);
 	});
 
 	describe(`${replacePlaceholders.name}()`, () => {
