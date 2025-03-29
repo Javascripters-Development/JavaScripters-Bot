@@ -6,9 +6,9 @@
 	"devDependencies": {
 		"@biomejs/biome": "^1.4.1",
 		"@types/common-tags": "^1.8.4",
-		"better-sqlite3": "^11.6.0",
+		"better-sqlite3": "^11.9.1",
 		"bun-types": "^1.0.20",
-		"drizzle-kit": "^0.20.9"
+		"drizzle-kit": "^0.30.6"
 	},
 	"author": "Jacob Jackson",
 	"license": "GPL-3.0-or-later",
@@ -18,7 +18,7 @@
 		"common-tags": "^1.8.2",
 		"discord.js": "^14.16.3",
 		"djs-fsrouter": "^0.0.12",
-		"drizzle-orm": "^0.29.2",
+		"drizzle-orm": "^0.41.0",
 		"entities-decode": "^2.0.0",
 		"erlpack": "^0.1.4",
 		"flexsearch": "^0.7.43",
