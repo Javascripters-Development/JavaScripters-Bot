@@ -2,7 +2,7 @@ import type { Config } from "drizzle-kit";
 
 export default {
 	schema: "src/schemas/*",
-	driver: "better-sqlite",
+	dialect: "sqlite",
 	dbCredentials: {
 		url: "main.db",
 	},
