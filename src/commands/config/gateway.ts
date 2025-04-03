@@ -5,6 +5,7 @@ import { ConfigurationMessage } from "../../structures/index.ts";
 import type { Command } from "djs-fsrouter";
 import { eq } from "drizzle-orm";
 import { checkIsValidTextChannel } from "../../utils/index.ts";
+import { ensureGuild } from "#repository";
 
 const manifest = createConfigurationManifest(GuildSchema, [
 	{
@@ -60,6 +61,8 @@ const ConfigCommand: Command = {
 			});
 			return;
 		}
+
+		await ensureGuild(interaction.guildId);
 
 		const configurationMessage = new ConfigurationMessage(manifest, {
 			getWhereClause: ({ table, interaction }) => eq(table.id, interaction.guildId),
