@@ -1,6 +1,6 @@
 import { hyperlink as djsHyperlink, hideLinkEmbed } from "discord.js";
 import db from "./db.ts";
-import { Config } from "./schemas/config.ts";
+import { GuildSchema } from "./schemas/guild.ts";
 import { sql, eq } from "drizzle-orm";
 /**
  * Casts a value into an array.
@@ -17,8 +17,8 @@ export const castArray = <T>(value: T): T extends any[] ? T : T[] => {
 
 export const getConfig = db
 	.select()
-	.from(Config)
-	.where(eq(Config.id, sql.placeholder("guildId")))
+	.from(GuildSchema)
+	.where(eq(GuildSchema.id, sql.placeholder("guildId")))
 	.prepare();
 
 // TEMP: use .all() and select the first row manually, .get() does not work

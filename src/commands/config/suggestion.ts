@@ -1,12 +1,12 @@
 import { PermissionFlagsBits } from "discord.js";
-import { Config } from "../../schemas/config.ts";
+import { GuildSchema } from "../../schemas/guild.ts";
 import { createConfigurationManifest } from "../../structures/index.ts";
 import { ConfigurationMessage } from "../../structures/index.ts";
 import { checkIsValidTextChannel } from "../../utils/index.ts";
 import type { Command } from "djs-fsrouter";
 import { eq } from "drizzle-orm";
 
-const manifest = createConfigurationManifest(Config, [
+const manifest = createConfigurationManifest(GuildSchema, [
 	{
 		name: "Suggestion channel",
 		description: "Suggestions will be sent here.",

@@ -21,7 +21,7 @@ import {
 } from "../schemas/suggestion.ts";
 import db from "../db.ts";
 import { and, eq, sql } from "drizzle-orm";
-import type { ConfigSelect } from "../schemas/config.ts";
+import type { GuildSelect } from "../schemas/guild.ts";
 import { client } from "../client.ts";
 import { capitalizeFirstLetter, getConfig } from "../utils.ts";
 import { BUTTON_ID, STATUS_BUTTON_STYLE_MAP, VOTE_BUTTON_ID, getStatusAsVerb } from "./suggestion-util.ts";
@@ -33,7 +33,7 @@ interface CreateSuggestionOptions {
 	description: string;
 	channel: GuildTextBasedChannel;
 	member: GuildMember;
-	dbConfig: ConfigSelect;
+	dbConfig: GuildSelect;
 }
 
 const FIND_BY_MESSAGE_STATEMENT = db.query.Suggestion.findMany({
@@ -65,10 +65,10 @@ export class Suggestion {
 	 */
 	public static readonly MAX_REASON_LENGTH = 2000;
 
-	constructor(protected data: SuggestionSelect, private dbConfig: ConfigSelect) {}
+	constructor(protected data: SuggestionSelect, private dbConfig: GuildSelect) {}
 
 	/** Upvote the suggestion. */
-	public async upvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
+	public async upvote(userId: string, dbConfig?: GuildSelect): Promise<void> {
 		if (!this.canVote) return;
 
 		const upvotes = new Set(this.data?.upvotedBy);
@@ -93,7 +93,7 @@ export class Suggestion {
 	}
 
 	/** Downvote the suggestion. */
-	public async downvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
+	public async downvote(userId: string, dbConfig?: GuildSelect): Promise<void> {
 		if (!this.canVote) return;
 
 		const upvotes = new Set(this.data?.upvotedBy);
@@ -118,7 +118,7 @@ export class Suggestion {
 	}
 
 	/** Remove the user's vote for the suggestion. */
-	public async removeVote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
+	public async removeVote(userId: string, dbConfig?: GuildSelect): Promise<void> {
 		const upvotes = new Set([...(this.data.upvotedBy ?? [])].filter((voteUserId) => voteUserId !== userId));
 		const downvotes = new Set([...(this.data.downvotedBy ?? [])].filter((voteUserId) => voteUserId !== userId));
 
@@ -143,12 +143,7 @@ export class Suggestion {
 	}
 
 	/** Set the status of the suggestion. */
-	public async setStatus(
-		user: User,
-		status: SuggestionStatus,
-		reason?: string,
-		dbConfig?: ConfigSelect,
-	): Promise<void> {
+	public async setStatus(user: User, status: SuggestionStatus, reason?: string, dbConfig?: GuildSelect): Promise<void> {
 		const updatedSuggestion = await db
 			.update(DbSuggestion)
 			.set({
@@ -167,7 +162,7 @@ export class Suggestion {
 	}
 
 	/** Update the suggestion's message */
-	protected async updateMessage(dbConfig?: ConfigSelect) {
+	protected async updateMessage(dbConfig?: GuildSelect) {
 		const channel = await client.channels.fetch(this.data.channelId);
 		const suggestionMessage = channel?.isTextBased() ? await channel?.messages.fetch(this.data.messageId) : null;
 		const messageOptions = await Suggestion.getMessageOptions(this);
