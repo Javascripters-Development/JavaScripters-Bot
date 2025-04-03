@@ -1,12 +1,6 @@
 import { getConfig } from "../../logging.ts";
 
-import {
-	ApplicationCommandOptionType,
-	ApplicationCommandType,
-	GuildMessageManager,
-	Message,
-	User,
-} from "discord.js";
+import { ApplicationCommandOptionType, ApplicationCommandType, GuildMessageManager, Message, User } from "discord.js";
 import type { Command } from "djs-fsrouter";
 import { deleteColor, editColor } from "../../listeners/logging.ts";
 
@@ -29,15 +23,10 @@ const Config: Command = {
 
 		await interaction.deferReply().catch(console.error);
 		const { channel } = getConfig(guild) || {};
-		if (!channel)
-			return interaction
-				.editReply("Error: No logging channel has been set.")
-				.catch(console.error);
+		if (!channel) return interaction.editReply("Error: No logging channel has been set.").catch(console.error);
 		const logs = await guild.channels.fetch(channel);
 		if (!logs || !logs.isTextBased())
-			return interaction
-				.editReply("Error: Could not retrieve the logging channel.")
-				.catch(console.error);
+			return interaction.editReply("Error: Could not retrieve the logging channel.").catch(console.error);
 
 		const target = interaction.options.getUser("user", true);
 		const targetMention = target.toString();
@@ -52,8 +41,7 @@ const Config: Command = {
 				if (member !== me || !embeds.length) return false;
 
 				const [{ description: embed, color }] = embeds;
-				if (!embed || (color !== deleteColor && color !== editColor))
-					return false;
+				if (!embed || (color !== deleteColor && color !== editColor)) return false;
 				if (embeds.length > 1) {
 					bulkPurges++;
 					promises.push(purgeBulk(target, message));
@@ -66,15 +54,10 @@ const Config: Command = {
 			if (targetLogs.size) toDelete.push(...targetLogs.values());
 		}
 
-		for (let i = 0; i < toDelete.length; i += 100)
-			promises.push(logs.bulkDelete(toDelete.slice(i, i + 100)));
+		for (let i = 0; i < toDelete.length; i += 100) promises.push(logs.bulkDelete(toDelete.slice(i, i + 100)));
 
 		await Promise.allSettled(promises);
-		interaction
-			.editReply(
-				`Erased ${toDelete.length} logs and purged ${bulkPurges} bulk logs.`,
-			)
-			.catch(console.error);
+		interaction.editReply(`Erased ${toDelete.length} logs and purged ${bulkPurges} bulk logs.`).catch(console.error);
 	},
 };
 export default Config;
@@ -84,9 +67,7 @@ async function* fetchTill14days(messageManager: GuildMessageManager) {
 	let chunk = await messageManager.fetch({ limit: 100, cache: false });
 	let last = chunk.last();
 	while (last) {
-		yield chunk.filter(
-			({ createdTimestamp }) => now - createdTimestamp < _14_DAYS,
-		);
+		yield chunk.filter(({ createdTimestamp }) => now - createdTimestamp < _14_DAYS);
 
 		if (now - last.createdTimestamp > _14_DAYS) return;
 
@@ -107,6 +88,5 @@ async function* fetchTill14days(messageManager: GuildMessageManager) {
  */
 function purgeBulk({ tag }: User, message: Message) {
 	const embeds = message.embeds.filter(({ author }) => author?.name !== tag);
-	if (embeds.length !== message.embeds.length)
-		return embeds.length ? message.edit({ embeds }) : message.delete();
+	if (embeds.length !== message.embeds.length) return embeds.length ? message.edit({ embeds }) : message.delete();
 }

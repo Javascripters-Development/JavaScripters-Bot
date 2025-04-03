@@ -5,6 +5,7 @@
 	"type": "module",
 	"devDependencies": {
 		"@biomejs/biome": "^1.4.1",
+		"@types/common-tags": "^1.8.4",
 		"better-sqlite3": "^11.9.1",
 		"bun-types": "^1.0.20",
 		"drizzle-kit": "^0.30.6"
@@ -14,7 +15,8 @@
 	"dependencies": {
 		"bufferutil": "^4.0.8",
 		"cheerio": "^1.0.0-rc.12",
-		"discord.js": "^14.14.1",
+		"common-tags": "^1.8.2",
+		"discord.js": "^14.16.3",
 		"djs-fsrouter": "^0.0.12",
 		"drizzle-orm": "^0.41.0",
 		"entities-decode": "^2.0.0",

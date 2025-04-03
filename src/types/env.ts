@@ -1,13 +1,4 @@
-import {
-	number,
-	object,
-	string,
-	minValue,
-	coerce,
-	optional,
-	picklist,
-	transform,
-} from "valibot";
+import { number, object, string, minValue, coerce, optional, picklist, transform } from "valibot";
 
 const env = object({
 	TOKEN: string(),

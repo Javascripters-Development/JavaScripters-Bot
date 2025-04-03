@@ -1,6 +1,6 @@
 import { hyperlink as djsHyperlink, hideLinkEmbed } from "discord.js";
 import db from "./db.ts";
-import { Config } from "./schemas/config.ts";
+import { GuildSchema } from "./schemas/guild.ts";
 import { sql, eq } from "drizzle-orm";
 /**
  * Casts a value into an array.
@@ -17,8 +17,8 @@ export const castArray = <T>(value: T): T extends any[] ? T : T[] => {
 
 export const getConfig = db
 	.select()
-	.from(Config)
-	.where(eq(Config.id, sql.placeholder("guildId")))
+	.from(GuildSchema)
+	.where(eq(GuildSchema.id, sql.placeholder("guildId")))
 	.prepare();
 
 // TEMP: use .all() and select the first row manually, .get() does not work
@@ -30,10 +30,8 @@ getConfig.get = (placeholderValues?: Record<string, unknown> | undefined) => {
  * Formats the content and the URL into a masked URL without embed.
  * @see {@link djsHyperlink}.
  */
-export const hyperlink = <C extends string, U extends string>(
-	content: C,
-	url: U,
-) => djsHyperlink(content, hideLinkEmbed(url));
+export const hyperlink = <C extends string, U extends string>(content: C, url: U) =>
+	djsHyperlink(content, hideLinkEmbed(url));
 
 /**
  * Capitalizes the first letter of a string.
@@ -41,9 +39,8 @@ export const hyperlink = <C extends string, U extends string>(
  * @example
  * capitalizeFirstLetter('hello world') // "Hello world"
  */
-export const capitalizeFirstLetter = <T extends string>(
-	value: T,
-): Capitalize<T> => (value[0].toUpperCase() + value.slice(1)) as Capitalize<T>;
+export const capitalizeFirstLetter = <T extends string>(value: T): Capitalize<T> =>
+	(value[0].toUpperCase() + value.slice(1)) as Capitalize<T>;
 
 /**
  * Utility for human readable time values.
@@ -68,7 +65,5 @@ export enum Time {
  * @example
  * getKeyByValue({ a: 1, b: 2, c: 3 }, 2) // "b"
  */
-export const getKeyByValue = <const T>(
-	object: Record<PropertyKey, T>,
-	value: T,
-) => Object.keys(object).find((key) => object[key] === value);
+export const getKeyByValue = <const T>(object: Record<PropertyKey, T>, value: T) =>
+	Object.keys(object).find((key) => object[key] === value);

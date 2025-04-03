@@ -1,15 +1,12 @@
 import db from "./db.ts";
 import { LogMode, type LogConfig } from "./types/logging.ts";
-import { Config } from "./schemas/config.ts";
+import { GuildSchema } from "./schemas/guild.ts";
 import { LoggingWhitelist } from "./schemas/loggingWhitelist.ts";
 import type { TextChannel, Guild, Role } from "discord.js";
 import { eq, and, sql } from "drizzle-orm";
 const { placeholder } = sql;
 
-export function setLogging(
-	{ id }: Guild,
-	config: LogMode.NONE | { mode: LogMode; channel: TextChannel },
-) {
+export function setLogging({ id }: Guild, config: LogMode.NONE | { mode: LogMode; channel: TextChannel }) {
 	let loggingMode = LogMode.NONE;
 	let loggingChannel = null;
 	if (config) {
@@ -18,10 +15,10 @@ export function setLogging(
 	}
 
 	return db
-		.insert(Config)
+		.insert(GuildSchema)
 		.values({ id, loggingMode, loggingChannel })
 		.onConflictDoUpdate({
-			target: Config.id,
+			target: GuildSchema.id,
 			set: { loggingMode, loggingChannel },
 		})
 		.returning();
@@ -46,9 +43,9 @@ export async function unwhitelistRole({ id, guild: { id: guildId } }: Role) {
 }
 
 const selectConfig = db
-	.select({ mode: Config.loggingMode, channel: Config.loggingChannel })
-	.from(Config)
-	.where(eq(Config.id, placeholder("guildId")))
+	.select({ mode: GuildSchema.loggingMode, channel: GuildSchema.loggingChannel })
+	.from(GuildSchema)
+	.where(eq(GuildSchema.id, placeholder("guildId")))
 	.prepare();
 
 const whitelistRoles = db
@@ -66,11 +63,6 @@ const whitelistRole_add = db
 
 const whitelistRole_remove = db
 	.delete(LoggingWhitelist)
-	.where(
-		and(
-			eq(LoggingWhitelist.guildId, placeholder("guildId")),
-			eq(LoggingWhitelist.roleId, placeholder("id")),
-		),
-	)
+	.where(and(eq(LoggingWhitelist.guildId, placeholder("guildId")), eq(LoggingWhitelist.roleId, placeholder("id"))))
 	.returning()
 	.prepare();

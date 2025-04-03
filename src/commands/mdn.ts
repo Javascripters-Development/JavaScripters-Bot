@@ -53,12 +53,8 @@ const Mdn: Command = {
 			: `${MDN_ROOT}${search(query, 1)[0]?.url}`;
 
 		const crawler = await scrape(url);
-		const intro = crawler(
-			".main-page-content > .section-content:first-of-type > *",
-		);
-		const links = crawler(
-			".main-page-content > .section-content:first-of-type a",
-		);
+		const intro = crawler(".main-page-content > .section-content:first-of-type > *");
+		const links = crawler(".main-page-content > .section-content:first-of-type a");
 		Array.prototype.forEach.call(links, makeLinkAbsolute);
 		let title: string = crawler("head title").text();
 		if (title.endsWith(" | MDN")) title = title.slice(0, -6);
