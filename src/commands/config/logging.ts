@@ -6,6 +6,7 @@ import { checkIsValidTextChannel } from "../../utils/index.ts";
 import type { Command } from "djs-fsrouter";
 import { eq } from "drizzle-orm";
 import { LogMode } from "../../types/logging.ts";
+import { ensureGuild } from "#repository";
 
 const LogModeValues = Object.keys(LogMode).filter((item) => !Number.isNaN(Number(item)));
 
@@ -54,6 +55,8 @@ const ConfigCommand: Command = {
 			});
 			return;
 		}
+
+		await ensureGuild(interaction.guildId);
 
 		const configurationMessage = new ConfigurationMessage(manifest, {
 			getWhereClause: ({ table, interaction }) => eq(table.id, interaction.guildId),

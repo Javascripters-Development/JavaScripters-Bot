@@ -18,6 +18,9 @@
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 
-		"verbatimModuleSyntax": true
+		"verbatimModuleSyntax": true,
+		"paths": {
+			"#repository": ["./src/repository/index.ts"]
+		}
 	}
 }
