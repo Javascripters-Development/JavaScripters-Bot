@@ -1,8 +1,8 @@
 import { Colors, EmbedBuilder, GuildMember, type PartialGuildMember, userMention } from "discord.js";
 import type { Listener } from "../types/listener.ts";
 import { getConfig } from "../utils.ts";
-import type { ConfigSelect } from "../schemas/config.ts";
-const getTargetChannel = async (dbConfig: ConfigSelect, member: GuildMember | PartialGuildMember) => {
+import type { GuildSelect } from "../schemas/guild.ts";
+const getTargetChannel = async (dbConfig: GuildSelect, member: GuildMember | PartialGuildMember) => {
 	if (!dbConfig?.gatewayChannel) return undefined;
 
 	const targetChannel = await member.guild.channels.fetch(dbConfig.gatewayChannel);
@@ -15,7 +15,7 @@ const getTargetChannel = async (dbConfig: ConfigSelect, member: GuildMember | Pa
 	return targetChannel;
 };
 
-const getEmbed = async (dbConfig: ConfigSelect, isLeaveEmbed?: boolean) => {
+const getEmbed = async (dbConfig: GuildSelect, isLeaveEmbed?: boolean) => {
 	const title = isLeaveEmbed ? dbConfig?.gatewayLeaveTitle : dbConfig?.gatewayJoinTitle;
 	const description = isLeaveEmbed ? dbConfig?.gatewayLeaveContent : dbConfig?.gatewayJoinContent;
 

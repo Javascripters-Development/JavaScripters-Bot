@@ -1,5 +1,5 @@
 import { PermissionFlagsBits, type Channel } from "discord.js";
-import { Config } from "../../schemas/config.ts";
+import { GuildSchema } from "../../schemas/guild.ts";
 import { createConfigurationManifest } from "../../structures/index.ts";
 import { ConfigurationMessage } from "../../structures/index.ts";
 import { checkIsValidTextChannel } from "../../utils/index.ts";
@@ -13,7 +13,7 @@ const LogModeSelectOptions = Object.entries(LogMode)
 	.filter(([, value]) => typeof value === "number")
 	.map(([key, value]) => ({ label: key, value: value.toString() }));
 
-const manifest = createConfigurationManifest(Config, [
+const manifest = createConfigurationManifest(GuildSchema, [
 	{
 		name: "Logging mode",
 		description: "Determines what should be logged.",
