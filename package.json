@@ -4,7 +4,7 @@
 	"module": "src/index.ts",
 	"type": "module",
 	"devDependencies": {
-		"@biomejs/biome": "^1.4.1",
+		"@biomejs/biome": "^2.0.5",
 		"better-sqlite3": "^11.9.1",
 		"bun-types": "^1.0.20",
 		"drizzle-kit": "^0.30.6"
