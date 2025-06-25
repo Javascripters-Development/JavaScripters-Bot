@@ -33,7 +33,7 @@ interface GetMessageOptionsContext<Table extends DrizzleTable> {
 
 interface ConfigurationMessageOptions<Table extends DrizzleTable = DrizzleTable> {
 	/** Dynamically create the where clause for the database query. */
-	getWhereClause: (context: GetMessageOptionsContext<Table>) => SQL<unknown>;
+	getConfigurationRowFilter: (context: GetMessageOptionsContext<Table>) => SQL<unknown>;
 	/**
 	 * How long will this configuration message be interactable.
 	 *
@@ -136,7 +136,7 @@ export class ConfigurationMessage<
 		interaction: MessageComponentInteraction<"cached" | "raw">,
 		manifestOption: ConfigurationOption<Table>,
 	) {
-		const whereClause = this.#options.getWhereClause({
+		const whereClause = this.#options.getConfigurationRowFilter({
 			table: manifestOption.table,
 			interaction,
 		});

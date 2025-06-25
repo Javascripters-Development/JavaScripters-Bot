@@ -65,7 +65,7 @@ const ConfigCommand: Command = {
 		await ensureGuild(interaction.guildId);
 
 		const configurationMessage = new ConfigurationMessage(manifest, {
-			getWhereClause: ({ table, interaction }) => eq(table.id, interaction.guildId),
+			getConfigurationRowFilter: ({ table, interaction }) => eq(table.id, interaction.guildId),
 		});
 
 		await configurationMessage.initialize(interaction);
