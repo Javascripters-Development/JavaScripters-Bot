@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, TextInputStyle } from "discord.js";
+import { MessageFlags, PermissionFlagsBits, TextInputStyle } from "discord.js";
 import { GuildSchema } from "../../schemas/guild.ts";
 import { createConfigurationManifest } from "../../structures/index.ts";
 import { ConfigurationMessage } from "../../structures/index.ts";
@@ -57,7 +57,7 @@ const ConfigCommand: Command = {
 		if (!interaction.inGuild()) {
 			interaction.reply({
 				content: "Run this command in a server to get server info",
-				ephemeral: true,
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
