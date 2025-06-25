@@ -25,6 +25,7 @@ import { sql, type Table as DrizzleTable } from "drizzle-orm";
 import { Time } from "../../utils.ts";
 import { getCustomId } from "./utils.ts";
 import { stripIndents } from "common-tags";
+import { PROMPT_TEXT_VALUE_MODAL_TIMEOUT } from "../../constants.ts";
 
 /** The context to provide for the update value hook. */
 export interface UpdateValueHookContext {
@@ -93,7 +94,7 @@ const promptTextValue = async (
 
 	const modalSubmitInteraction = (await interaction.awaitModalSubmit({
 		filter: (interaction) => interaction.customId === modalCustomId,
-		time: Time.Minute * 2,
+		time: PROMPT_TEXT_VALUE_MODAL_TIMEOUT,
 	})) as ModalSubmitInteraction<"cached" | "raw">;
 
 	await updateValueHook({
