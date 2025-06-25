@@ -146,7 +146,7 @@ export class ConfigurationMessage<
 				value: manifestOption.table[manifestOption.column as keyof object],
 			})
 			.from(manifestOption.table)
-			.where(and(whereClause))
+			.where(whereClause)
 			.all()
 			// TEMP: use .all() and select the first row manually, .get() does not work
 			.at(0) as { value: unknown };
