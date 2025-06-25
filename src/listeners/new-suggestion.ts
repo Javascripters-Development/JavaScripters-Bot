@@ -2,7 +2,7 @@ import { Suggestion } from "../structures/suggestion.ts";
 import type { Listener } from "../types/listener.ts";
 import { getConfig } from "../utils.ts";
 
-export default ({
+export default {
 	event: "messageCreate",
 	async handler(message) {
 		if (
@@ -26,4 +26,4 @@ export default ({
 			dbConfig,
 		});
 	},
-} as Listener);
+} as Listener;

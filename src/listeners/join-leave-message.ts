@@ -41,7 +41,7 @@ const getEmbed = async (dbConfig: ConfigSelect, isLeaveEmbed?: boolean) => {
 	});
 };
 
-export default ([
+export default [
 	{
 		event: "guildMemberAdd",
 		async handler(member) {
@@ -78,4 +78,4 @@ export default ([
 			});
 		},
 	},
-] as Listener[]);
+] as Listener[];

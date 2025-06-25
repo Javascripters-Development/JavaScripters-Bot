@@ -137,7 +137,7 @@ function msgDeletionEmbed({ content, author, attachments }: Message): APIEmbed {
 			? attachments.map(({ url }) => ({
 					name: `Attachment ${++attachmentN}`,
 					value: url,
-			  }))
+				}))
 			: undefined,
 	};
 }

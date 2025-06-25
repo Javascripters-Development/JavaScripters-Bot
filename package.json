@@ -35,5 +35,7 @@
 		"migrate:clean": "drizzle-kit drop",
 		"studio": "drizzle-kit studio"
 	},
-	"trustedDependencies": ["better-sqlite3"]
+	"trustedDependencies": [
+		"better-sqlite3"
+	]
 }

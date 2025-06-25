@@ -365,7 +365,7 @@ export class Suggestion {
 						name: `${capitalizeFirstLetter(suggestion.status.toLocaleLowerCase())} by ${statusUser.username} (${time(suggestion.updatedAt, "R")})`,
 						value: suggestion.statusReason ?? italic("No reason provided"),
 					},
-			  ]
+				]
 			: undefined;
 
 		const author = {
@@ -378,8 +378,8 @@ export class Suggestion {
 				suggestion.status === "ACCEPTED"
 					? Colors.Green
 					: suggestion.status === "REJECTED"
-					  ? Colors.Red
-					  : Colors.White,
+						? Colors.Red
+						: Colors.White,
 			description: suggestion.description ?? undefined,
 			fields,
 			author,

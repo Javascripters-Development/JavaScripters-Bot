@@ -1,23 +1,23 @@
 {
-  "compilerOptions": {
-    // add Bun type definitions
-    "types": ["bun-types"],
+	"compilerOptions": {
+		// add Bun type definitions
+		"types": ["bun-types"],
 
-    // enable latest features
-    "lib": ["esnext"],
-    "module": "NodeNext",
-    "target": "esnext",
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
-    "moduleDetection": "force",
-    // drizzle orm errors with nodenext
-    "moduleResolution": "NodeNext",
-    "esModuleInterop": true,
+		// enable latest features
+		"lib": ["esnext"],
+		"module": "NodeNext",
+		"target": "esnext",
+		"noEmit": true,
+		"allowImportingTsExtensions": true,
+		"moduleDetection": "force",
+		// drizzle orm errors with nodenext
+		"moduleResolution": "NodeNext",
+		"esModuleInterop": true,
 
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
+		"strict": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
 
-    "verbatimModuleSyntax": true
-  }
+		"verbatimModuleSyntax": true
+	}
 }
