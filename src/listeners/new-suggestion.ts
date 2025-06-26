@@ -5,13 +5,7 @@ import { getConfig } from "../utils.ts";
 export default {
 	event: "messageCreate",
 	async handler(message) {
-		if (
-			!message.inGuild() ||
-			!message.deletable ||
-			!message.member ||
-			message.author.bot
-		)
-			return;
+		if (!message.inGuild() || !message.deletable || !message.member || message.author.bot) return;
 
 		const dbConfig = getConfig.get({ guildId: message.guildId });
 

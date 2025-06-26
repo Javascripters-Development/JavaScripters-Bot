@@ -1,8 +1,5 @@
 import { ButtonStyle, type Interaction, ButtonInteraction } from "discord.js";
-import {
-	type SuggestionStatus,
-	type UpdatedSuggestionStatus,
-} from "../schemas/suggestion.ts";
+import { type SuggestionStatus, type UpdatedSuggestionStatus } from "../schemas/suggestion.ts";
 
 export type SuggestionButtonId = (typeof BUTTON_ID)[keyof typeof BUTTON_ID];
 
@@ -42,27 +39,18 @@ export const getStatusAsVerb = (status: SuggestionStatus) => {
 };
 
 /** Check if the interaction is a valid suggestion button interaction. */
-export const isValidStatusButtonInteraction = (
-	interaction: Interaction,
-): interaction is ButtonInteraction => {
+export const isValidStatusButtonInteraction = (interaction: Interaction): interaction is ButtonInteraction => {
 	const validButtonIds = Object.values(BUTTON_ID);
 
-	return (
-		interaction.isButton() &&
-		validButtonIds.includes(interaction.customId as SuggestionButtonId)
-	);
+	return interaction.isButton() && validButtonIds.includes(interaction.customId as SuggestionButtonId);
 };
 
 /** Check if the interaction is a valid suggestion vote button interaction. */
-export const isValidVoteButtonInteraction = (
-	interaction: Interaction,
-): interaction is ButtonInteraction => {
+export const isValidVoteButtonInteraction = (interaction: Interaction): interaction is ButtonInteraction => {
 	const validButtonIds = Object.values(VOTE_BUTTON_ID);
 
 	return (
 		interaction.isButton() &&
-		validButtonIds.includes(
-			interaction.customId as (typeof VOTE_BUTTON_ID)[keyof typeof VOTE_BUTTON_ID],
-		)
+		validButtonIds.includes(interaction.customId as (typeof VOTE_BUTTON_ID)[keyof typeof VOTE_BUTTON_ID])
 	);
 };

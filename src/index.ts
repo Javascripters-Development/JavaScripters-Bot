@@ -20,10 +20,7 @@ const parsedEnv = safeParse(
 if (!parsedEnv.success) {
 	console.error(
 		`Issues loading environment variables: \n-----------\n${parsedEnv.issues
-			.map(
-				(issue) =>
-					`Variable: ${issue?.path?.[0].key}\nInput: ${issue.input}\nError: ${issue.message}\n-----------`,
-			)
+			.map((issue) => `Variable: ${issue?.path?.[0].key}\nInput: ${issue.input}\nError: ${issue.message}\n-----------`)
 			.join("\n")}`,
 	);
 	exit(1);

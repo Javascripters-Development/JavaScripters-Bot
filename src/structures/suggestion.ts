@@ -1,9 +1,9 @@
 import {
-	User,
+	type User,
 	type GuildTextBasedChannel,
-	GuildMember,
+	type GuildMember,
 	EmbedBuilder,
-	Message,
+	type Message,
 	type EmbedData,
 	italic,
 	Colors,
@@ -21,15 +21,10 @@ import {
 } from "../schemas/suggestion.ts";
 import db from "../db.ts";
 import { and, eq, sql } from "drizzle-orm";
-import type { ConfigSelect } from "../schemas/config.ts";
+import type { GuildSelect } from "../schemas/guild.ts";
 import { client } from "../client.ts";
 import { capitalizeFirstLetter, getConfig } from "../utils.ts";
-import {
-	BUTTON_ID,
-	STATUS_BUTTON_STYLE_MAP,
-	VOTE_BUTTON_ID,
-	getStatusAsVerb,
-} from "./suggestion-util.ts";
+import { BUTTON_ID, STATUS_BUTTON_STYLE_MAP, VOTE_BUTTON_ID, getStatusAsVerb } from "./suggestion-util.ts";
 import { truncate } from "../utils/common.ts";
 
 export const SUGGESTION_USER_ALREADY_VOTED = "UserAlreadyVoted";
@@ -38,7 +33,7 @@ interface CreateSuggestionOptions {
 	description: string;
 	channel: GuildTextBasedChannel;
 	member: GuildMember;
-	dbConfig: ConfigSelect;
+	dbConfig: GuildSelect;
 }
 
 const FIND_BY_MESSAGE_STATEMENT = db.query.Suggestion.findMany({
@@ -72,11 +67,11 @@ export class Suggestion {
 
 	constructor(
 		protected data: SuggestionSelect,
-		private dbConfig: ConfigSelect,
+		private dbConfig: GuildSelect,
 	) {}
 
 	/** Upvote the suggestion. */
-	public async upvote(userId: string, dbConfig?: ConfigSelect): Promise<void> {
+	public async upvote(userId: string, dbConfig?: GuildSelect): Promise<void> {
 		if (!this.canVote) return;
 
 		const upvotes = new Set(this.data?.upvotedBy);
@@ -101,10 +96,7 @@ export class Suggestion {
 	}
 
 	/** Downvote the suggestion. */
-	public async downvote(
-		userId: string,
-		dbConfig?: ConfigSelect,
-	): Promise<void> {
+	public async downvote(userId: string, dbConfig?: GuildSelect): Promise<void> {
 		if (!this.canVote) return;
 
 		const upvotes = new Set(this.data?.upvotedBy);
@@ -129,20 +121,9 @@ export class Suggestion {
 	}
 
 	/** Remove the user's vote for the suggestion. */
-	public async removeVote(
-		userId: string,
-		dbConfig?: ConfigSelect,
-	): Promise<void> {
-		const upvotes = new Set(
-			[...(this.data.upvotedBy ?? [])].filter(
-				(voteUserId) => voteUserId !== userId,
-			),
-		);
-		const downvotes = new Set(
-			[...(this.data.downvotedBy ?? [])].filter(
-				(voteUserId) => voteUserId !== userId,
-			),
-		);
+	public async removeVote(userId: string, dbConfig?: GuildSelect): Promise<void> {
+		const upvotes = new Set([...(this.data.upvotedBy ?? [])].filter((voteUserId) => voteUserId !== userId));
+		const downvotes = new Set([...(this.data.downvotedBy ?? [])].filter((voteUserId) => voteUserId !== userId));
 
 		const updatedSuggestion = await db
 			.update(DbSuggestion)
@@ -165,12 +146,7 @@ export class Suggestion {
 	}
 
 	/** Set the status of the suggestion. */
-	public async setStatus(
-		user: User,
-		status: SuggestionStatus,
-		reason?: string,
-		dbConfig?: ConfigSelect,
-	): Promise<void> {
+	public async setStatus(user: User, status: SuggestionStatus, reason?: string, dbConfig?: GuildSelect): Promise<void> {
 		const updatedSuggestion = await db
 			.update(DbSuggestion)
 			.set({
@@ -189,11 +165,9 @@ export class Suggestion {
 	}
 
 	/** Update the suggestion's message */
-	protected async updateMessage(dbConfig?: ConfigSelect) {
+	protected async updateMessage(dbConfig?: GuildSelect) {
 		const channel = await client.channels.fetch(this.data.channelId);
-		const suggestionMessage = channel?.isTextBased()
-			? await channel?.messages.fetch(this.data.messageId)
-			: null;
+		const suggestionMessage = channel?.isTextBased() ? await channel?.messages.fetch(this.data.messageId) : null;
 		const messageOptions = await Suggestion.getMessageOptions(this);
 
 		// Ensure the message can be edited
@@ -201,15 +175,11 @@ export class Suggestion {
 
 		await suggestionMessage.edit(messageOptions);
 
-		const isThreadUnlocked =
-			suggestionMessage?.thread && !suggestionMessage?.thread.locked;
+		const isThreadUnlocked = suggestionMessage?.thread && !suggestionMessage?.thread.locked;
 
 		// Lock thread if suggestion is accepted/rejected
 		if (this.hasUpdatedStatus && isThreadUnlocked) {
-			await suggestionMessage.thread.setLocked(
-				true,
-				"Suggestion got accepted or rejected",
-			);
+			await suggestionMessage.thread.setLocked(true, "Suggestion got accepted or rejected");
 		}
 	}
 
@@ -283,12 +253,7 @@ export class Suggestion {
 	}
 
 	/** Create a new suggestion. */
-	public static async create({
-		description,
-		channel,
-		member,
-		dbConfig,
-	}: CreateSuggestionOptions): Promise<Suggestion> {
+	public static async create({ description, channel, member, dbConfig }: CreateSuggestionOptions): Promise<Suggestion> {
 		const embed = new EmbedBuilder({
 			title: `Loading suggestion from ${member.user.username}...`,
 		});
@@ -323,12 +288,7 @@ export class Suggestion {
 	}
 
 	/** Create the {@link Suggestion} instance from an existing suggestion {@link Message}. */
-	public static async createFromMessage({
-		id,
-		guildId,
-		channelId,
-		url,
-	}: Message) {
+	public static async createFromMessage({ id, guildId, channelId, url }: Message) {
 		// TEMP: use .all() and select the first row manually, .get() does not work
 		const foundSuggestion = (
 			await FIND_BY_MESSAGE_STATEMENT.all({
@@ -339,13 +299,9 @@ export class Suggestion {
 
 		const dbConfig = getConfig.get({ guildId });
 
-		if (!dbConfig)
-			throw new Error(`No config in the database for guild with ID ${guildId}`);
+		if (!dbConfig) throw new Error(`No config in the database for guild with ID ${guildId}`);
 
-		if (!foundSuggestion)
-			throw new Error(
-				`Could not find a suggestion associated with message ${url}`,
-			);
+		if (!foundSuggestion) throw new Error(`Could not find a suggestion associated with message ${url}`);
 
 		return new Suggestion(foundSuggestion, dbConfig);
 	}
@@ -353,9 +309,7 @@ export class Suggestion {
 	/** Get the message options for this suggestion. */
 	private static async getMessageOptions(suggestion: Suggestion) {
 		const user = await client.users.fetch(suggestion.userId);
-		const statusUser = suggestion.statusUserId
-			? await client.users.fetch(suggestion.statusUserId)
-			: null;
+		const statusUser = suggestion.statusUserId ? await client.users.fetch(suggestion.statusUserId) : null;
 		const hasUpdatedStatus = Boolean(statusUser);
 
 		const fields: EmbedData["fields"] | undefined = statusUser
@@ -375,11 +329,7 @@ export class Suggestion {
 
 		const embed = new EmbedBuilder({
 			color:
-				suggestion.status === "ACCEPTED"
-					? Colors.Green
-					: suggestion.status === "REJECTED"
-						? Colors.Red
-						: Colors.White,
+				suggestion.status === "ACCEPTED" ? Colors.Green : suggestion.status === "REJECTED" ? Colors.Red : Colors.White,
 			description: suggestion.description ?? undefined,
 			fields,
 			author,
@@ -398,10 +348,7 @@ export class Suggestion {
 			embeds: [embed],
 			components: [
 				new ActionRowBuilder<ButtonBuilder>({
-					components: [
-						getButtonBuilder("ACCEPTED"),
-						getButtonBuilder("REJECTED"),
-					],
+					components: [getButtonBuilder("ACCEPTED"), getButtonBuilder("REJECTED")],
 				}),
 				new ActionRowBuilder<ButtonBuilder>({
 					components: [
