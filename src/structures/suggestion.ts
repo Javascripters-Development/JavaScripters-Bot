@@ -1,9 +1,9 @@
 import {
-	type type type type User,
+	type User,
 	type GuildTextBasedChannel,
-	type type type type GuildMember,
+	type GuildMember,
 	EmbedBuilder,
-	type type type type Message,
+	type Message,
 	type EmbedData,
 	italic,
 	Colors,
@@ -65,7 +65,10 @@ export class Suggestion {
 	 */
 	public static readonly MAX_REASON_LENGTH = 2000;
 
-	constructor(protected data: SuggestionSelect, private dbConfig: GuildSelect) {}
+	constructor(
+		protected data: SuggestionSelect,
+		private dbConfig: GuildSelect,
+	) {}
 
 	/** Upvote the suggestion. */
 	public async upvote(userId: string, dbConfig?: GuildSelect): Promise<void> {
@@ -326,11 +329,7 @@ export class Suggestion {
 
 		const embed = new EmbedBuilder({
 			color:
-				suggestion.status === "ACCEPTED"
-					? Colors.Green
-					: suggestion.status === "REJECTED"
-						? Colors.Red
-						: Colors.White,
+				suggestion.status === "ACCEPTED" ? Colors.Green : suggestion.status === "REJECTED" ? Colors.Red : Colors.White,
 			description: suggestion.description ?? undefined,
 			fields,
 			author,
