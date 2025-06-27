@@ -1,5 +1,6 @@
 import type { Listener } from "../types/listener.ts";
 import { customId } from "../commands/delete-and-warn.ts";
+import { MessageFlags } from "discord.js";
 
 export default [
 	{
@@ -29,7 +30,7 @@ export default [
 				.then(() => {
 					interaction
 						.reply({
-							flags: "Ephemeral",
+							flags: MessageFlags.Ephemeral,
 							content: "Reason sent.",
 						})
 						.catch(console.error);
@@ -37,7 +38,7 @@ export default [
 				.catch(() => {
 					interaction
 						.reply({
-							flags: "Ephemeral",
+							flags: MessageFlags.Ephemeral,
 							content: `The reason could not be sent to ${target}; they proabably blocked me or disabled DMs from server members.\n\`\`\`${reason}\`\`\``,
 						})
 						.catch(console.error);

@@ -4,6 +4,7 @@ import {
 	ModalBuilder,
 	TextInputStyle,
 	inlineCode,
+	MessageFlags,
 } from "discord.js";
 import type { Listener } from "../types/listener.ts";
 import {
@@ -56,7 +57,7 @@ export default [
 					content: `You're missing the manager role and ${inlineCode(
 						"ManageGuild",
 					)} permission`,
-					flags: "Ephemeral",
+					flags: MessageFlags.Ephemeral,
 				});
 			}
 
@@ -66,7 +67,7 @@ export default [
 			) {
 				return interaction.reply({
 					content: `You're missing the ${inlineCode("ManageGuild")} permission`,
-					flags: "Ephemeral",
+					flags: MessageFlags.Ephemeral,
 				});
 			}
 
@@ -124,7 +125,7 @@ export default [
 					"this suggestion",
 					interaction.message.url,
 				)} to ${inlineCode(statusString.toLowerCase())}`,
-				flags: "Ephemeral",
+				flags: MessageFlags.Ephemeral,
 			});
 		},
 	},
@@ -154,7 +155,7 @@ export default [
 						"this",
 						interaction.message.url,
 					)} suggestion`,
-					flags: "Ephemeral",
+					flags: MessageFlags.Ephemeral,
 				});
 			} else {
 				await suggestion.downvote(interaction.user.id, config);
@@ -163,7 +164,7 @@ export default [
 						"this",
 						interaction.message.url,
 					)} suggestion`,
-					flags: "Ephemeral",
+					flags: MessageFlags.Ephemeral,
 				});
 			}
 		},
