@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, PermissionFlagsBits } from "discord.js";
+import { ApplicationCommandOptionType, PermissionFlagsBits, MessageFlags } from "discord.js";
 const { ManageMessages } = PermissionFlagsBits;
 import type { Command } from "djs-fsrouter";
 
@@ -28,7 +28,7 @@ const Purge: Command = {
 		const { channel } = interaction;
 
 		function reply(content: string) {
-			return interaction.reply({ flags: "Ephemeral", content });
+			return interaction.reply({ flags: MessageFlags.Ephemeral, content });
 		}
 
 		if (!channel) {

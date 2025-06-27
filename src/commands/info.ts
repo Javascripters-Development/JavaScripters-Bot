@@ -3,6 +3,7 @@ import {
 	type APIEmbed,
 	ApplicationCommandType,
 	channelMention,
+	MessageFlags,
 } from "discord.js";
 import type { Command } from "djs-fsrouter";
 
@@ -14,7 +15,7 @@ const Info: Command = {
 		if (!interaction.guild) {
 			interaction.reply({
 				content: "Run this command in a server to get server info",
-				flags: "Ephemeral",
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
