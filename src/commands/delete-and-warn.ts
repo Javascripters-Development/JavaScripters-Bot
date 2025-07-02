@@ -2,6 +2,7 @@ import {
 	PermissionFlagsBits,
 	ApplicationCommandType,
 	TextInputStyle,
+	MessageFlags,
 } from "discord.js";
 const { ManageMessages, ModerateMembers } = PermissionFlagsBits;
 import { modalInput } from "../components.ts";
@@ -17,18 +18,18 @@ const DeleteAndWarn: MessageCommand = {
 		const { channel, targetMessage } = interaction;
 		if (!channel)
 			return interaction.reply({
-				flags: "Ephemeral",
+				flags: MessageFlags.Ephemeral,
 				content: "Error: could not fetch the channel",
 			});
 		if (channel.isDMBased())
 			return interaction.reply({
-				flags: "Ephemeral",
+				flags: MessageFlags.Ephemeral,
 				content: "Cannot use this command in DMs",
 			});
 
 		if (!targetMessage.deletable) {
 			return interaction.reply({
-				flags: "Ephemeral",
+				flags: MessageFlags.Ephemeral,
 				content:
 					"I do not have the permission to delete messages in this channel.",
 			});
